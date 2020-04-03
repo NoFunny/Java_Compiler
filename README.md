@@ -24,7 +24,7 @@ gradle build
 ```
 
 #### You can also use IntelliJIDEA for running project
-![Image](https://github.com/NoFunny/Java_Compiler/raw/master/lab1/src/main/resources/info.jpeg)
+![Image](https://github.com/NoFunny/Java_Compiler/raw/master/src/main/resources/info.jpeg)
 
 ### Into program:
 ```
