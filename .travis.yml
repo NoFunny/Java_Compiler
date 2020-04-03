@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - openjdk12
+  - openjdk11
 os: linux
 dist: xenial
 script:

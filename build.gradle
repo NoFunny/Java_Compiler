@@ -12,7 +12,7 @@ mainClassName = "compiler.Main"
 run {
     standardInput = System.in
 }
-
+1
 repositories {
     mavenCentral()
 }
