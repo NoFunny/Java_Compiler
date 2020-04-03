@@ -21,8 +21,8 @@ public class Main {
     static parse Parser;
 
     public static void main(String[] args) throws IOException {
-        String input = readFile("/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/alg.java");
-        String outputDir = "/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/out.txt";
+        String input = readFile("src/main/resources/alg.java");
+        String outputDir = "src/main/resources/out.txt";
         boolean flag = true;
 
         while (flag) {
