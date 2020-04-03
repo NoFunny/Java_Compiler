@@ -13,17 +13,17 @@ public class ParserTest extends TestCase {
 
 
     public void testGo() {
-        String input = readFile("/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/syntaxTest.java");
+        String input = readFile("https://github.com/NoFunny/Java_Compiler/blob/master/src/main/resources/syntaxTest.java");
         Tokenizer lexer = new Tokenizer(input);
         Parser parser = new Parser(new LexerList(lexer));
         Assert.assertEquals(null,parser.go());
 
-        String input1 = readFile("/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/grammarTest.java");
+        String input1 = readFile("https://github.com/NoFunny/Java_Compiler/blob/master/src/main/resources/grammarTest.java");
         Tokenizer lexer1 = new Tokenizer(input1);
         Parser parser1 = new Parser(new LexerList(lexer1));
         Assert.assertEquals(null, parser1.go());
 
-        String input2 = readFile("/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/funcTest.java");
+        String input2 = readFile("https://github.com/NoFunny/Java_Compiler/blob/master/src/main/resources/funcTest.java");
         Tokenizer lexer2 = new Tokenizer(input2);
         Parser parser2 = new Parser(new LexerList(lexer2));
         Assert.assertEquals("loc<23:16> ID 'min'", parser2.go().getMainMethod().getStatementList().get(7).toString());
