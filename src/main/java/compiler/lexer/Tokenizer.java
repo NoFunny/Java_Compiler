@@ -36,7 +36,6 @@ public class Tokenizer {
         if(matcher.find()) {
             if(!matcher1.find()) {
             System.out.println("ERROR: BLOCK COMMENT DON'T CLOSE");
-//            System.out.println(String.format("loc <%d> : BLOCK COMMENT DON'T CLOSE! ", matcher.start()));
             return null;
             }
         }
@@ -225,7 +224,6 @@ public class Tokenizer {
             new ConstString("OPEN_CURL_BRACKET", "{"),
             new ConstString("CLOSE_CURL_BRACKET", "}"),
             new ConstString("INT", "int"),
-//            new ConstString("type_String", "String"),
             new ConstString("VOID", "void"),
             new ConstString("FLOOAT", "float"),
             new ConstString("CHAAR", "char"),
@@ -234,7 +232,6 @@ public class Tokenizer {
             new ConstString("CLOSE_BRACKET", ")"),
             new ConstString("CLASS", "class"),
             new ConstString("PUBLIC", "public"),
-//            new ConstString("MAIN", "main"),
             new ConstString("PRIVATE", "private"),
             new ConstString("PROTECTED", "protected"),
             new ConstString("STATIC", "static"),
@@ -249,10 +246,8 @@ public class Tokenizer {
             new Regexp("MUL", "(\\*)"),
             new Regexp("DIV", "(/)"),
             new Regexp("MOD", "(%)"),
-//            new Regexp("OPERATOR", "(>>|<<)"),
             new Regexp("GREATER", "(>).*"),
             new Regexp("LESS", "(<).*"),
-//            new Regexp("STRUCTURE_REFERENCE", "[a-zA-Z_][a-zA-Z0-9_]*\\("),
             new Regexp("EqEQUAL", "(==)"),
             new Regexp("EQUAL", "(=)"),
             new Regexp("LessOrEq", "(<=)"),
@@ -263,13 +258,11 @@ public class Tokenizer {
             new ConstString("ELSE_OPERATOR", "else"),
             new Regexp("LOGIC_AND", "(&&)"),
             new Regexp("LOGIC_OR", "(\\|\\|)"),
-//            new Regexp("QUICK_OPERATOR", "(\\+=|-=|\\*=|/=)"),
             new ConstString("COMMA", ","),
             new ConstString("OPEN_SQUARE_BRACKET", "["),
             new ConstString("CLOSE_SQUARE_BRACKET", "]"),
             new ConstString("SEMICOLON", ";"),
             new ConstString("COLON", ":"),
-//            new ConstString("DOT", "."),
             new Regexp("NULL_LITERAL", "(Null|NULL|null)"),
             new Regexp("ID", "^([a-zA-Z_$])([a-zA-Z_$0-9])*$"),
     };

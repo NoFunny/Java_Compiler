@@ -38,7 +38,6 @@ public class parse implements Runnable {
     public void run() {
         Parser parser = new Parser(new LexerList(tokenizer));
         NodeClass root = parser.go();
-//                    parser.showTree();
         parser.printTreeToFile();
         Table identifierTable = new Table();
         try {
@@ -49,7 +48,7 @@ public class parse implements Runnable {
             return;
         }
         identifierTable.printTable();
-        System.out.println("Парсер закончил!");
+        System.out.println("\nПарсер закончил!\nТаблица готова!");
         System.out.println("\n1 - <lexical analysis>" + '\n' + "2 - <parse>" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
         System.out.println("Choose part:");
     }

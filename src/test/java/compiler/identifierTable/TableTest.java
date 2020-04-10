@@ -85,9 +85,7 @@ public class TableTest extends TestCase {
         identifierTable.printTable();
         ArrayList<String> key;
         key = TestHelper(identifierTable, "GLOBAL_TABLE");
-        System.out.println(key);
         int count = 0;
-        System.out.println(key.toString().equals("a"));
         for(String k : key) {
             if (k.equals("a")) {
                 Assert.assertEquals("a", k);
@@ -97,7 +95,6 @@ public class TableTest extends TestCase {
                 count++;
             }
         }
-        System.out.println(count);
         if (count != 2)
             Assert.fail();
     }
@@ -111,20 +108,16 @@ public class TableTest extends TestCase {
         for (String key : table.getMainTable().keySet()) {
             if (table.getMainTable().get(key) instanceof Id ||
                     table.getMainTable().get(key) instanceof ArgId) {
-                System.out.println(key);
                 if (key.equals("a")) {
-                    System.out.println("123");
                     keys.add(key);
                 }
                 if (key.equals("b")) {
-                    System.out.println("456");
                     keys.add(key);
                 }
             } else if (table.getMainTable().get(key) instanceof Table) {
                 table_keys.add(key);
             }
             if (keys.toArray().length == 2) {
-                System.out.println(keys.toArray().length);
                 return keys;
             }
         }

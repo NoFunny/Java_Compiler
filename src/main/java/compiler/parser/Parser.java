@@ -78,7 +78,6 @@ public class Parser {
         lexerList.match("OPEN_CURL_BRACKET");
 
         List<NodeInit> initList = new ArrayList<>();
-        //if(parseInitList(initList))
         parseInitList(initList);
         for(NodeInit init : initList) {
             node.addInit(init);
@@ -98,7 +97,6 @@ public class Parser {
     }
 
 
-    ///Что то сделать с иф
     private void parseInitList(List<NodeInit> initList) throws CriticalParseException {
         final String currentTokenType = lexerList.getLookahead().getType();
         if (checkTypeForParseInitList(currentTokenType)) {
@@ -736,7 +734,6 @@ public class Parser {
         }
     }
 
-///Что то сделать с иф
     private void parseStatementList(List<NodeStatement> statementList) throws CriticalParseException {
         final String currentTokenType = lexerList.getLookahead().getType();
 

@@ -172,17 +172,11 @@ public class Table implements GenericUnit {
                 result = checkGenericValue(gv);
             }
 
-
-//Прописать условие для lvalue
             NodeExpression tmpExpr;
-            System.out.println(expr.getlExpression());
             if ((tmpExpr = expr.getlExpression()) != null) {
-                System.out.println(tmpExpr);
                 result = checkExpression(tmpExpr);
             }
-            System.out.println(expr.getrExpression());
             if ((tmpExpr = expr.getrExpression()) != null) {
-                System.out.println(tmpExpr);
                 result = checkExpression(tmpExpr);
             }
         }

@@ -13,7 +13,6 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Main {
-    private static StringBuilder tokens = new StringBuilder();
     private static LinkedList<Token> tokenss = new LinkedList<>();
     private static Tokenizer tokenizer = null;
 
@@ -55,7 +54,6 @@ public class Main {
                     Lexer = new lex();
                     Thread threadLex = new Thread(Lexer);
                     threadLex.start();
-                    System.out.println("Потоки закончили свою работу!");
                     break;
                 case 4:
                     flag = false;

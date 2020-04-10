@@ -7,7 +7,6 @@ import java.io.*;
 import java.util.LinkedList;
 
 public class lex implements Runnable {
-    private static StringBuilder tokens = new StringBuilder();
     private static LinkedList<Token> tokenss = new LinkedList<>();
     private static Tokenizer tokenizer = null;
     String input = readFile("src/main/resources/alg.java");
