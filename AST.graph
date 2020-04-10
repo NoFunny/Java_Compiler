@@ -3,13 +3,9 @@ node [shape="box", style="filled", margin="0.1"];
 "class0" [label="class\nModAccess=public\nid=Test"];
 "init1" [label="INIT\nDataType=int\nid=getMin\nType=FUNC"];
 "ARGS2" [label="ARGS"];
-"args3"  [label="DataType=int
-id=arr
-Type=ARRAY"];
+"args3"  [label="DataType=int id=arr Type=ARRAY"];
 "ARGS2" -> "args3" ;
-"args4"  [label="DataType=int
-id=size
-Type=VAR"];
+"args4"  [label="DataType=int id=size Type=VAR"];
 "ARGS2" -> "args4" ;
 "init1" -> "ARGS2";
 "STATEMENTS5" [label="STATEMENTS"];

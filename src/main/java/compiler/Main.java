@@ -40,7 +40,6 @@ public class Main {
                 case 2:
                     Parser parser = new Parser(new LexerList(tokenizer));
                     NodeClass root = parser.go();
-//                    parser.showTree();
                     parser.printTreeToFile();
                     Table identifierTable = new Table();
                     try {

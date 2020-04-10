@@ -39,8 +39,14 @@ public class Table implements GenericUnit {
         return mainTable;
     }
 
+    public Table getParentTable() { return parentTable;}
+
     public NodeStatement getNode() {
         return node;
+    }
+
+    public String getNameTable() {
+        return this.nameTable;
     }
 
     public void go(NodeClass root) throws SemanticException {

@@ -33,7 +33,7 @@ public class NodeArgsInit implements Node {
     public int visit(String rootNode, int index, StringBuilder sb) {
         String thisNode = String.format("\"args%d\" ", index++);
 
-        sb.append(String.format("%s [label=\"DataType=%s\nid=%s\nType=%s\"];\n",
+        sb.append(String.format("%s [label=\"DataType=%s id=%s Type=%s\"];\n",
                 thisNode,
                 dataType.getValue(),
                 id.getValue(),

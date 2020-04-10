@@ -10,8 +10,8 @@ public class lex implements Runnable {
     private static StringBuilder tokens = new StringBuilder();
     private static LinkedList<Token> tokenss = new LinkedList<>();
     private static Tokenizer tokenizer = null;
-    String input = readFile("/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/alg.java");
-    String outputDir = "/home/nofunny/Рабочий стол/study/curs3.2/TPL/Java_Compiler/src/main/resources/out.txt";
+    String input = readFile("src/main/resources/alg.java");
+    String outputDir = "src/main/resources/out.txt";
     static parse Parser;
 
     public static String readFile(String fileDir) {

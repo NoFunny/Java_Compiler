@@ -78,6 +78,7 @@ public class Parser {
         lexerList.match("OPEN_CURL_BRACKET");
 
         List<NodeInit> initList = new ArrayList<>();
+        //if(parseInitList(initList))
         parseInitList(initList);
         for(NodeInit init : initList) {
             node.addInit(init);
@@ -96,15 +97,21 @@ public class Parser {
         lexerList.matchOneOf("PUBLIC", "PRIVATE", "PROTECTED");
     }
 
+
+    ///Что то сделать с иф
     private void parseInitList(List<NodeInit> initList) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
-        if (currentTokenType.equals("INT") ||
-                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("CHAR")) {
+        final String currentTokenType = lexerList.getLookahead().getType();
+        if (checkTypeForParseInitList(currentTokenType)) {
             initList.add(parseInitInsideClass());
             parseInitList(initList);
         }
+    }
+
+    private boolean checkTypeForParseInitList(String currentTokenType) {
+        return  currentTokenType.equals("INT") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("CHAR");
     }
 
     private NodeInit parseInitInsideClass() throws CriticalParseException {
@@ -121,7 +128,7 @@ public class Parser {
     }
 
     private ForkInit parseFirstForkInitInsideClass(List<Token> id) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         ForkInit forkInit;
 
@@ -173,17 +180,11 @@ public class Parser {
     }
 
     private ArrayMember parseArrayMemberFork() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         ArrayMember arrayMember = null;
 
-        if (currentTokenType.equals("INTEGER") ||
-                currentTokenType.equals("INT") ||
-                currentTokenType.equals("OCTAL") ||
-                currentTokenType.equals("HEX") ||
-                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("BINARSUB")) {
+        if (checkTypeForParseArrayMemberFork(currentTokenType)) {
             arrayMember = new ArrayMemberNumber(parseNumber());
         } else if (currentTokenType.equals("ID")) {
             arrayMember = new ArrayMemberId(lexerList.getLookahead());
@@ -198,8 +199,18 @@ public class Parser {
         return arrayMember;
     }
 
+    private boolean checkTypeForParseArrayMemberFork(String currentTokenType) {
+        return  currentTokenType.equals("INTEGER") ||
+                currentTokenType.equals("INT") ||
+                currentTokenType.equals("OCTAL") ||
+                currentTokenType.equals("HEX") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("BINARSUB");
+    }
+
     private ForkInit parseSecondForkInitInsideClass() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         ForkInit forkInit;
 
@@ -258,7 +269,7 @@ public class Parser {
     }
 
     private NodeStatement parseStatement() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
         NodeStatement node = null;
 
         if (currentTokenType.equals("OPEN_CURL_BRACKET")) {
@@ -269,17 +280,9 @@ public class Parser {
             node = parseLoop();
         } else if (currentTokenType.equals("IF_OPERATOR")) {
             node = parseConditional();
-        } else if (currentTokenType.equals("ID") ||
-                currentTokenType.equals("INTEGER") ||
-                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("OCTAL") ||
-                currentTokenType.equals("HEX") ||
-                currentTokenType.equals("BINARSUB") ||
-                currentTokenType.equals("STRING")) {
+        } else if (checkTypeForParseStatementExpr(currentTokenType)) {
             node = parseExpression();
-        } else if (currentTokenType.equals("INT") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("CHAAR")) {
+        } else if (checkTypeForParseStatementFunc(currentTokenType)) {
             node = parseInitInsideFunc();
         } else if (currentTokenType.equals("SEMICOLON")) {
             lexerList.match("SEMICOLON");
@@ -292,6 +295,24 @@ public class Parser {
         }
         return node;
     }
+
+    private boolean checkTypeForParseStatementExpr(String currentTokenType) {
+        return  currentTokenType.equals("ID") ||
+                currentTokenType.equals("INTEGER") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("OCTAL") ||
+                currentTokenType.equals("HEX") ||
+                currentTokenType.equals("BINARSUB") ||
+                currentTokenType.equals("STRING");
+    }
+
+
+    private boolean checkTypeForParseStatementFunc(String currentTokenType) {
+        return  currentTokenType.equals("INT") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("CHAAR");
+    }
+
 
     private NodeStatement parseScanln() throws CriticalParseException {
         NodeScanln node = new NodeScanln();
@@ -313,7 +334,7 @@ public class Parser {
         node.setDataType(lexerList.getLookahead());
         parseNativeDataType();
 
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("OPEN_SQUARE_BRACKET")) {
             lexerList.match("OPEN_SQUARE_BRACKET");
@@ -356,18 +377,9 @@ public class Parser {
 
     private NodeExpression parseExpression() throws CriticalParseException {
         NodeExpression node = new NodeExpression();
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
-        if (currentTokenType.equals("ID") ||
-                currentTokenType.equals("INT") ||
-                currentTokenType.equals("INTEGER") ||
-                currentTokenType.equals("OCTAL") ||
-                currentTokenType.equals("HEX") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("STRING") ||
-                currentTokenType.equals("BINARSUB") ||
-                currentTokenType.equals("OPEN_BRACKET")) {
+        if (checkTypeForParseExpression(currentTokenType)) {
             parseArithmetic(node);
             parseExprFork(node);
         } else {
@@ -382,24 +394,29 @@ public class Parser {
 
     }
 
-    private void parseExprFork(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+    private boolean checkTypeForParseExpression(String currentTokenType) {
+        return  currentTokenType.equals("ID") ||
+                currentTokenType.equals("INT") ||
+                currentTokenType.equals("INTEGER") ||
+                currentTokenType.equals("OCTAL") ||
+                currentTokenType.equals("HEX") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("STRING") ||
+                currentTokenType.equals("BINARSUB") ||
+                currentTokenType.equals("OPEN_BRACKET");
+    }
 
-        if (currentTokenType.equals("LOGIC_AND") ||
-                currentTokenType.equals("LOGIC_OR")) {
+    private void parseExprFork(NodeExpression node) throws CriticalParseException {
+        final String currentTokenType = lexerList.getLookahead().getType();
+
+        if (checkTypeForParseExprForkLogic(currentTokenType)) {
             node.setOperator(parseLogicOperator());
             node.setrExpression(parseExpression());
-        } else if (currentTokenType.equals("LESS") ||
-                currentTokenType.equals("GREATER") ||
-                currentTokenType.equals("EqEQUAL") ||
-                currentTokenType.equals("NotEqual") ||
-                currentTokenType.equals("EQUAL")) {
+        } else if (checkTypeForParseExprForkConditions(currentTokenType)) {
             node.setOperator(parseConditions());
             node.setrExpression(parseExpression());
-        } else if (currentTokenType.equals("BINARSUB") ||
-                currentTokenType.equals("BINARPLUS") ||
-                currentTokenType.equals("MUL") ||
-                currentTokenType.equals("DIV")) {
+        } else if (checkTypeForParseExprForkOperator(currentTokenType)) {
             node.setOperator(parseOperator());
         } else if (currentTokenType.equals("SEMICOLON")) {
             try {
@@ -408,6 +425,26 @@ public class Parser {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean checkTypeForParseExprForkLogic(String currentTokenType) {
+        return  currentTokenType.equals("LOGIC_AND") ||
+                currentTokenType.equals("LOGIC_OR");
+    }
+
+    private boolean checkTypeForParseExprForkConditions(String currentTokenType) {
+        return  currentTokenType.equals("LESS") ||
+                currentTokenType.equals("GREATER") ||
+                currentTokenType.equals("EqEQUAL") ||
+                currentTokenType.equals("NotEqual") ||
+                currentTokenType.equals("EQUAL");
+    }
+
+    private boolean checkTypeForParseExprForkOperator(String currentTokenType) {
+        return  currentTokenType.equals("BINARSUB") ||
+                currentTokenType.equals("BINARPLUS") ||
+                currentTokenType.equals("MUL") ||
+                currentTokenType.equals("DIV");
     }
 
     private Operator parseLogicOperator() throws CriticalParseException {
@@ -433,7 +470,7 @@ public class Parser {
     }
 
     private void parseSecondPrior_(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("BINARPLUS") || currentTokenType.equals("BINARSUB")) {
             parseSecondPriorOper(node);
@@ -448,7 +485,7 @@ public class Parser {
     }
 
     private void parseFirstPrior_(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("MUL") || currentTokenType.equals("DIV")) {
             parseFirstPriorOper(node);
@@ -458,7 +495,7 @@ public class Parser {
     }
 
     private void parseSecondPriorOper(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (node.getOperator() == null) {
             node.setOperator(new Operator(lexerList.getLookahead()));
@@ -492,7 +529,7 @@ public class Parser {
     }
 
     private void parseFirstPriorOper(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (node.getOperator() == null) {
             node.setOperator(new Operator(lexerList.getLookahead()));
@@ -525,7 +562,7 @@ public class Parser {
 
 
     private void parseGroup(NodeExpression node) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("OPEN_BRACKET")) {
             lexerList.match("OPEN_BRACKET");
@@ -542,15 +579,7 @@ public class Parser {
 
             lexerList.match("CLOSE_BRACKET");
             parseExprFork(node);
-        } else if (currentTokenType.equals("ID") ||
-                currentTokenType.equals("INT") ||
-                currentTokenType.equals("INTEGER") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("OCTAL") ||
-                currentTokenType.equals("HEX") ||
-                currentTokenType.equals("BINARSUB") ||
-                currentTokenType.equals("STRING")) {
+        } else if (checkTypeForParseGroup(currentTokenType)) {
             if (node.getlValue() == null) {
                 node.setlValue(parseValueExpr());
             } else if (node.getrValue() == null) {
@@ -570,18 +599,24 @@ public class Parser {
         }
     }
 
+    private boolean checkTypeForParseGroup(String currentTokenType) {
+        return  currentTokenType.equals("ID") ||
+                currentTokenType.equals("INT") ||
+                currentTokenType.equals("INTEGER") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("OCTAL") ||
+                currentTokenType.equals("HEX") ||
+                currentTokenType.equals("BINARSUB") ||
+                currentTokenType.equals("STRING");
+    }
+
     private GenericValue parseValueExpr() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
         GenericValue node = null;
         if (currentTokenType.equals("ID")) {
             node = parseVExpr();
-        } else if (currentTokenType.equals("INT") ||
-                    currentTokenType.equals("INTEGER") ||
-                    currentTokenType.equals("FLOAT") ||
-                    currentTokenType.equals("FLOOAT") ||
-                    currentTokenType.equals("OCTAL") ||
-                    currentTokenType.equals("HEX") ||
-                currentTokenType.equals("BINARSUB")) {
+        } else if (checkTypeForParseValueExpr(currentTokenType)) {
             node = parseNumber();
         } else if (currentTokenType.equals("STRING")) {
             node = new StrLiteral();
@@ -597,6 +632,16 @@ public class Parser {
         return node;
     }
 
+    private boolean checkTypeForParseValueExpr(String currentTokenType) {
+        return  currentTokenType.equals("INT") ||
+                currentTokenType.equals("INTEGER") ||
+                currentTokenType.equals("FLOAT") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("OCTAL") ||
+                currentTokenType.equals("HEX") ||
+                currentTokenType.equals("BINARSUB");
+    }
+
     private Number parseNumber() throws CriticalParseException {
         Number node = new Number();
 
@@ -610,7 +655,7 @@ public class Parser {
     }
 
     private boolean parseSign() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("BINARSUB")) {
             lexerList.match("BINARSUB");
@@ -637,7 +682,7 @@ public class Parser {
     }
 
     private GenericValue parseVExprChanger() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if(currentTokenType.equals("OPEN_SQUARE_BRACKET")) {
             CallArrayMember node = new CallArrayMember();
@@ -659,10 +704,18 @@ public class Parser {
     }
 
     private List<GenericValue> parseArgsCallListChanger() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
         List<GenericValue> list = new ArrayList<>();
 
-        if (currentTokenType.equals("ID") ||
+        if (checkTypeForParseArgsCallListChanger(currentTokenType)) {
+            parseArgsCallList(list);
+        }
+
+        return list;
+    }
+
+    private boolean checkTypeForParseArgsCallListChanger(String currentTokenType) {
+        return  currentTokenType.equals("ID") ||
                 currentTokenType.equals("INTEGER") ||
                 currentTokenType.equals("OCTAL") ||
                 currentTokenType.equals("HEX") ||
@@ -670,11 +723,7 @@ public class Parser {
                 currentTokenType.equals("FLOAT") ||
                 currentTokenType.equals("INT") ||
                 currentTokenType.equals("BINARSUB") ||
-                currentTokenType.equals("STRING")) {
-            parseArgsCallList(list);
-        }
-
-        return list;
+                currentTokenType.equals("STRING");
     }
 
     private void parseArgsCallList(List<GenericValue> list) throws CriticalParseException {
@@ -687,11 +736,18 @@ public class Parser {
         }
     }
 
-
+///Что то сделать с иф
     private void parseStatementList(List<NodeStatement> statementList) throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
-        if (currentTokenType.equals("OPEN_CURL_BRACKET") ||
+        if (checkTypeForParseStatementList(currentTokenType)) {
+            statementList.add(parseStatement());
+            parseStatementList(statementList);
+        }
+    }
+
+    private boolean checkTypeForParseStatementList(String currentTokenType) {
+        return  currentTokenType.equals("OPEN_CURL_BRACKET") ||
                 currentTokenType.equals("WHILE_OPERATOR") ||
                 currentTokenType.equals("IF_OPERATOR") ||
                 currentTokenType.equals("INTEGER") ||
@@ -707,25 +763,25 @@ public class Parser {
                 currentTokenType.equals("RETURN") ||
                 currentTokenType.equals("SEMICOLON") ||
                 currentTokenType.equals("PRINTLN") ||
-                currentTokenType.equals("SCANLN")) {
-            statementList.add(parseStatement());
-            parseStatementList(statementList);
-        }
+                currentTokenType.equals("SCANLN");
     }
 
     private List<NodeArgsInit> parseArgsInitListChanger() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
-        if (currentTokenType.equals("INT") ||
-//                currentTokenType.equals("FLOAT") ||
-                currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("CHAAR")) {
+        if (checkTypeForParseArgsInitListChanger(currentTokenType)) {
             List<NodeArgsInit> list = new ArrayList<>();
             parseArgsInitList(list);
             return list;
         }
 
         return null;
+    }
+
+    private boolean checkTypeForParseArgsInitListChanger(String currentTokenType) {
+        return  currentTokenType.equals("INT") ||
+                currentTokenType.equals("FLOOAT") ||
+                currentTokenType.equals("CHAAR");
     }
 
     private void parseArgsInitList(List<NodeArgsInit> list) throws CriticalParseException {
@@ -756,7 +812,7 @@ public class Parser {
     }
 
     private boolean parseRValueFork() throws CriticalParseException {
-        String currentTokenType = lexerList.getLookahead().getType();
+        final String currentTokenType = lexerList.getLookahead().getType();
 
         if (currentTokenType.equals("OPEN_SQUARE_BRACKET")) {
             lexerList.match("OPEN_SQUARE_BRACKET");
