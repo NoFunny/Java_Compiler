@@ -36,3 +36,5 @@ gradle build
 3 - <compile>
 4 - <exit>
 ```
+
+### To view the tree, select the contents of the AST.graph file and draw it on the [Site](http://www.webgraphviz.com/)
