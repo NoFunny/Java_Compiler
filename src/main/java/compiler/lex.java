@@ -43,7 +43,6 @@ public class lex implements Runnable {
     @Override
     public void run() {
         tokenizer = new Tokenizer(input);
-        System.out.println(tokenizer.getTokenss());
         writeTokensToFile(outputDir);
         Parser = new parse(tokenizer);
         Thread threadParse = new Thread(Parser);

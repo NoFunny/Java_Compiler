@@ -22,6 +22,7 @@ public class Table implements GenericUnit {
     private Map<String,GenericUnit> mainTable = new HashMap<>();
     private Table parentTable = null;
     private NodeStatement node;
+    private Map<String, String> listInit =  new HashMap<>();
 
     public void setNameTable(String nameTable) {
         this.nameTable = nameTable;
@@ -108,23 +109,73 @@ public class Table implements GenericUnit {
     private void addInitNode(NodeInit nodeInit) throws SemanticException {
         ForkInit tmpForkInit = nodeInit.getForkInit();
 
+
+        List<NodeInit> initTypes = new ArrayList<>();
         if (tmpForkInit instanceof ForkInitVar ||
                 tmpForkInit instanceof ForkInitArray) {
             String tmpNameID = nodeInit.getId().getValue();
+            listInit.put(nodeInit.getId().getValue(), nodeInit.getDataType().getType());
 
             if (!containsKey(tmpNameID)) {
                 mainTable.put(tmpNameID, new Id(nodeInit));
             } else {
-                throw new SemanticException(String.format("%s already init in table <%s>",
+                throw new SemanticException(String.format("ERROR semantic: %s already init in table <%s>",
                         tmpNameID,
                         nameTable));
             }
-
+//            System.out.println(listInit);
             if (tmpForkInit instanceof ForkInitVar) {
                 if (!checkExpression(((ForkInitVar) tmpForkInit).getExpression())) {
-                    throw new SemanticException(String.format("%s not init in table <%s>",
+                    throw new SemanticException(String.format("ERROR semantic: %s not init in table <%s>",
                             tmpForkInit,
                             nameTable));
+                }
+            }
+            if (tmpForkInit instanceof ForkInitVar) {
+                String tmpNameID1 = nodeInit.getId().getValue();
+                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("INTEGER")) {
+                    switch (listInit.get(tmpNameID1)) {
+                        case "INT":
+                            break;
+                        case "INTEGER":
+                            break;
+                        default:
+                            throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    listInit.get(tmpNameID1),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                    }
+                }
+                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("FLOAT")) {
+                    switch (listInit.get(tmpNameID1)) {
+                        case "FLOAT":
+                            break;
+                        case "FLOOAT":
+                            break;
+                        default:
+                            throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    listInit.get(tmpNameID1),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                    }
+                }
+                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("FLOOAT")) {
+                    for (int i = 0; i < listInit.size(); i++) {
+                        switch (listInit.get(tmpNameID1)) {
+                            case "FLOAT":
+                                break;
+                            case "FLOOAT":
+                                break;
+                            default:
+                                throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                        listInit.get(tmpNameID1),
+                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                        }
+                    }
                 }
             }
         } else if (tmpForkInit instanceof CallFunc) {
@@ -137,8 +188,9 @@ public class Table implements GenericUnit {
                 newTable.setParentTable(this);
                 newTable.next(tmpForkInit);
                 mainTable.put(tmpNameID, newTable);
+
             } else {
-                throw new SemanticException(String.format("%s already init in table <%s>",
+                throw new SemanticException(String.format("ERROR semantic: %s already init in table <%s>",
                         tmpNameID,
                         nameTable));
             }
@@ -165,7 +217,6 @@ public class Table implements GenericUnit {
             GenericValue gv;
 
             if ((gv = expr.getlValue()) != null) {
-                System.out.println(expr.getlValue().getValue());
                 result = checkGenericValue(gv);
             }
             if ((gv = expr.getrValue()) != null) {
@@ -193,65 +244,509 @@ public class Table implements GenericUnit {
                         !gv.getValue().getType().equals("FLOAT"))) {
             result = containsKey(gv.getValue().getValue());
         }
+        if(gv instanceof Attachment && !result) {
+            return false;
+        }
 
         if (!result) {
             return true;
         }
 
-        if (gv instanceof Attachment) {
-            result = checkExpression(((Attachment) gv).getExpression());
-        } else if (gv instanceof CallArrayMember) {
-            ArrayMember am = ((CallArrayMember) gv).getArrayMember();
 
-            if (am instanceof ArrayMemberId) {
-                result = containsKey(((ArrayMemberId) am).getId().getValue());
-            }
-        } else if (gv instanceof FuncCall) {
-            GenericUnit gu = findIdByName(gv.getValue().getValue());
-            NodeStatement node = null;
-            List<NodeArgsInit> argsInitList = null;
+        if(gv instanceof Attachment) {
+            String nameResult = gv.getValue().getValue();
 
-            if (gu != null) {
-                if (gu instanceof Table) {
-                    node = ((Table) gu).getNode();
-                }
-            }
+            if(((Attachment) gv).getExpression().getrValue() != null && !listInit.isEmpty()) {
+                if (((Attachment) gv).getExpression().getlValue().getClass().toString().contains("GenericValue") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("GenericValue")) {
+                    System.out.println("1");
+                    System.out.println(listInit.get(nameResult));
+                    switch (listInit.get(nameResult)) {
+                        case "INT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "INTEGER":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
 
-            if (node != null) {
-                if (node instanceof NodeInit) {
-                    ForkInit tmpForkInit = ((NodeInit) node).getForkInit();
-
-                    if (tmpForkInit instanceof CallFunc) {
-                        argsInitList = ((CallFunc) tmpForkInit).getNodeArgsInitList();
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOAT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOOAT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
                     }
-                }
-            }
-            if (argsInitList != null) {
-                if (argsInitList.size() != ((FuncCall) gv).getArgsCall().size()) {
-                    throw new SemanticException(String.format("ERROR semantic: invalid count args <%s> in %s",
-                            gv.getValue(),
-                            nameTable));
-                }
-            }
+                } else if (((Attachment) gv).getExpression().getlValue().getClass().toString().contains("Number") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("GenericValue")) {
+                    System.out.println("2");
+                    switch (listInit.get(nameResult)) {
+                        case "INT":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
 
-            for (int i = 0; i < ((FuncCall) gv).getArgsCall().size(); i++) {
-                GenericUnit dataType = findIdByName(((FuncCall) gv).getArgsCall().get(i).getValue().getValue());
-                if (!argsInitList.get(i).getDataType().getValue()
-                        .equals(((Id) dataType).getNode().getDataType().getValue()))
-                {
-                    throw new SemanticException(String.format("ERROR semantic: invalid args <%s> in %s",
-                            gv.getValue(),
-                            nameTable));
-                }
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "INTEGER":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOAT":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOOAT":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                    }
+                } else if(((Attachment) gv).getExpression().getlValue().getClass().toString().contains("GenericValue") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("Number")) {
+                    System.out.println("3");
+                    switch (listInit.get(nameResult)) {
+                        case "INT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
 
-                result = checkGenericValue(((FuncCall) gv).getArgsCall().get(i));
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "INTEGER":
+                            System.out.println(listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue()));
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            System.out.println(((Attachment) gv).getExpression().getrValue().getValue().getType());
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOAT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getValue()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOOAT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getValue()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                    }
+                } else if(((Attachment) gv).getExpression().getlValue().getClass().toString().contains("Number") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("Number")) {
+                    switch (listInit.get(nameResult)) {
+                        case "INT":
+                            switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
+
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "INTEGER":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
+                                case "INTEGER":
+                                    break;
+                                case "INT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                            break;
+                        case "FLOAT":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                        case "FLOOAT":
+                            switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
+                            }
+                            switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
+                                case "FLOAT":
+                                    break;
+                                case "FLOOAT":
+                                    break;
+                                default:
+                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                            listInit.get(nameResult),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getType(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
+                                            ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getCol()));
+                            }
+                    }
+
+                }
             }
-        } else if (gv != null) {
-            result = true;
+        result = checkExpression(((Attachment) gv).getExpression());
+    } else if (gv instanceof CallArrayMember) {
+        ArrayMember am = ((CallArrayMember) gv).getArrayMember();
+
+        if (am instanceof ArrayMemberId) {
+            result = containsKey(((ArrayMemberId) am).getId().getValue());
+        }
+    } else if (gv instanceof FuncCall) {
+        GenericUnit gu = findIdByName(gv.getValue().getValue());
+        NodeStatement node = null;
+        List<NodeArgsInit> argsInitList = null;
+
+        if (gu != null) {
+            if (gu instanceof Table) {
+                node = ((Table) gu).getNode();
+            }
         }
 
-        return result;
+        if (node != null) {
+            if (node instanceof NodeInit) {
+//                    System.out.println(((NodeInit) node).getDataType().getType());
+                ForkInit tmpForkInit = ((NodeInit) node).getForkInit();
+
+                if (tmpForkInit instanceof CallFunc) {
+                    argsInitList = ((CallFunc) tmpForkInit).getNodeArgsInitList();
+                }
+            }
+        }
+        if (argsInitList != null) {
+            if (argsInitList.size() != ((FuncCall) gv).getArgsCall().size()) {
+                throw new SemanticException(String.format("ERROR semantic: invalid count args <%s> in %s",
+                        gv.getValue(),
+                        nameTable));
+            }
+        }
+
+        for (int i = 0; i < ((FuncCall) gv).getArgsCall().size(); i++) {
+            GenericUnit dataType = findIdByName(((FuncCall) gv).getArgsCall().get(i).getValue().getValue());
+            if (!argsInitList.get(i).getDataType().getValue()
+                    .equals(((Id) dataType).getNode().getDataType().getValue()))
+            {
+                throw new SemanticException(String.format("ERROR semantic: invalid type args <%s> in %s",
+                        gv.getValue(),
+                        nameTable));
+            }
+
+            result = checkGenericValue(((FuncCall) gv).getArgsCall().get(i));
+        }
+    } else if (gv != null) {
+        result = true;
     }
+
+        return result;
+}
 
     private GenericUnit findIdByName(String name) {
         GenericUnit gu = null;
@@ -312,12 +807,12 @@ public class Table implements GenericUnit {
             if (statement instanceof NodeScanln) {
                 String id = ((NodeScanln) statement).getId().getValue();
                 if (!containsKey(id)) {
-                    throw new SemanticException(String.format("%s not init in table <%s>",
+                    throw new SemanticException(String.format("ERROR semantic: variable <%s> not init in table <%s>",
                             id,
                             nameTable));
                 }
             } else if (!checkExpression(statement)) {
-                throw new SemanticException(String.format("%s not init in table <%s>",
+                throw new SemanticException(String.format("ERROR semantic: variable <%s> not init in table <%s>",
                         statement,
                         nameTable));
             }

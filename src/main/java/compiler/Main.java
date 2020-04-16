@@ -17,8 +17,7 @@ public class Main {
     private static Tokenizer tokenizer = null;
 
     static lex Lexer;
-    static parse Parser;
-
+    
     public static void main(String[] args) throws IOException {
         String input = readFile("src/main/resources/alg.java");
         String outputDir = "src/main/resources/out.txt";
