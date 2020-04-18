@@ -47,10 +47,8 @@ public class parse implements Runnable {
                     e.getMessage()));
             return;
         }
-        identifierTable.printTable();
-        System.out.println("\nПарсер закончил!\nТаблица готова!");
-        System.out.println("\n1 - --dumb-token" + '\n' + "2 - --dumb-parser" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
-        System.out.println("Choose part:");
+        return;
+//        identifierTable.printTable();
     }
 }
 

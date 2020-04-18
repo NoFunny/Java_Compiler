@@ -31,6 +31,7 @@ public class Main {
             int s = Integer.parseInt(in.nextLine());
             switch (s) {
                 case 1:
+                    System.out.println(input);
                     tokenizer = new Tokenizer(input);
                     System.out.println(tokenizer.getTokenss());
                     writeTokensToFile(outputDir);
@@ -53,6 +54,7 @@ public class Main {
                     Lexer = new lex();
                     Thread threadLex = new Thread(Lexer);
                     threadLex.start();
+                    flag = false;
                     break;
                 case 4:
                     flag = false;

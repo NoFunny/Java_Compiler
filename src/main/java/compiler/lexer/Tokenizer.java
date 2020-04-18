@@ -23,7 +23,7 @@ public class Tokenizer {
     public static String processComments(String input) {
 
 
-        System.out.println(input);
+//        System.out.println(input);
         String commentRegex = "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)";
         String openBlockComment = "(\\/\\*)";
         String closeBlockComment = "(\\*\\/)";
@@ -64,7 +64,7 @@ public class Tokenizer {
 
         tokens.add("loc = <0:0> 'program' (program)" + ';');
         tokenss.add(new Token("program", "program",new Location(0,0)));
-        System.out.println("loc = <0:0> 'program' (program)");
+//        System.out.println("loc = <0:0> 'program' (program)");
         for (Character c : input.toCharArray()) {
             if((c == '\n' && stack.equals("{")) || (c == '\n' && stack.equals(";")) || (c == '\n' && stack.equals("}"))) {
                 flushStack(lineCount, index);
@@ -88,7 +88,7 @@ public class Tokenizer {
                         tokenss.add(new Token(littmp, stack+c, new Location(lineCount,index)));
                         tokens.add(String.format("loc <%d:%d>: '%s' %s",lineCount,index, stack + c, littmp) + ";");
                         index++;
-                        System.out.println(String.format("loc <%d:%d>: '%s' %s",lineCount,index, stack + c, littmp));
+//                        System.out.println(String.format("loc <%d:%d>: '%s' %s",lineCount,index, stack + c, littmp));
                         stack = "";
                         continue;
                     }
@@ -118,7 +118,7 @@ public class Tokenizer {
                             numtmp = parseNumeric(stack.substring(0, i));
                             if (numtmp != null) {
 
-                                System.out.println(String.format("loc = <%d:%d> '%s' (%s)",lineCount,index-1, stack.substring(0, i), numtmp));
+//                                System.out.println(String.format("loc = <%d:%d> '%s' (%s)",lineCount,index-1, stack.substring(0, i), numtmp));
                                 tokenss.add(new Token(numtmp, stack.substring(0,i), new Location(lineCount,index)));
                                 tokens.add(String.format("loc = <%d:%d> '%s' (%s)",lineCount,index-1, stack.substring(0, i), numtmp) + ";");
 
@@ -156,7 +156,7 @@ public class Tokenizer {
             flushStack(lineCount, index);
         tokenss.add(new Token(EOF, "", new Location(lineCount,index)));
         tokens.add(String.format("loc = <%d:%d> '' %s", lineCount, index, EOF));
-        System.out.println(String.format("loc = <%d:%d> %s", lineCount, index, EOF));
+//        System.out.println(String.format("loc = <%d:%d> %s", lineCount, index, EOF));
     }
 
 
@@ -171,7 +171,7 @@ public class Tokenizer {
             }
             tokenss.add(new Token(tmp, stack, new Location(lineCount,index)));
             tokens.add(String.format("loc = <%d:%d> '%s' (%s)", lineCount, index, stack, tmp) + ";");
-            System.out.println(String.format("loc = <%d:%d> '%s' (%s)", lineCount, index, stack, tmp) + "\u001B[0m");
+//            System.out.println(String.format("loc = <%d:%d> '%s' (%s)", lineCount, index, stack, tmp) + "\u001B[0m");
             stack = "";
         }
     }
