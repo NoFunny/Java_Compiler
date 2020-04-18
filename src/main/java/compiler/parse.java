@@ -49,7 +49,7 @@ public class parse implements Runnable {
         }
         identifierTable.printTable();
         System.out.println("\nПарсер закончил!\nТаблица готова!");
-        System.out.println("\n1 - <lexical analysis>" + '\n' + "2 - <parse>" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
+        System.out.println("\n1 - --dumb-token" + '\n' + "2 - --dumb-parser" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
         System.out.println("Choose part:");
     }
 }

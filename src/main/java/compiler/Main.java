@@ -24,9 +24,9 @@ public class Main {
         boolean flag = true;
 
         while (flag) {
-            System.out.println("\n1 - <lexical analysis>" + '\n' + "2 - <parse>" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
+            System.out.println("\n1 - --dumb-token" + '\n' + "2 - --dumb-parser" + '\n' + "3 - <compile>" + '\n' + "4 - <exit>");
             System.out.println("Choose part:");
-
+    //--dumb-token,ast,parser...выводить что то по команде и компилировать
             Scanner in = new Scanner(System.in);
             int s = Integer.parseInt(in.nextLine());
             switch (s) {

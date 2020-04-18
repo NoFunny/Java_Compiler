@@ -254,7 +254,7 @@ public class Parser {
     }
 
     private void parseNativeDataType() throws CriticalParseException {
-        lexerList.matchOneOf("INTEGER", "INT", "CHAR", "FLOAT", "FLOOAT", "OCTAL", "HEX");
+        lexerList.matchOneOf("INTEGER", "INT", "CHAR", "CHAAR", "FLOAT", "FLOOAT", "OCTAL", "HEX");
     }
 
     private ForkInit parseForkInitVar() throws CriticalParseException {
