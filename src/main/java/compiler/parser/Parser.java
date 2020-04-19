@@ -109,7 +109,8 @@ public class Parser {
         return  currentTokenType.equals("INT") ||
                 currentTokenType.equals("FLOAT") ||
                 currentTokenType.equals("FLOOAT") ||
-                currentTokenType.equals("CHAR");
+                currentTokenType.equals("CHAR") ||
+                currentTokenType.equals("CHAAR");
     }
 
     private NodeInit parseInitInsideClass() throws CriticalParseException {
@@ -188,7 +189,7 @@ public class Parser {
             arrayMember = new ArrayMemberId(lexerList.getLookahead());
             lexerList.match("ID");
         } else {
-            throw new CriticalParseException("expecting <ID or INT,FLOAT,OCTAL,HEX"
+            throw new CriticalParseException("expecting <ID or INT,FLOAT"
                     + ">, but found is <"+ lexerList.getLookahead().getType() +
                     ":" + lexerList.getLookahead().getValue()
                     + "> in " + lexerList.getLookahead().getLocation());
@@ -381,7 +382,7 @@ public class Parser {
             parseArithmetic(node);
             parseExprFork(node);
         } else {
-            throw new CriticalParseException("expecting <ID or INTEGER,FLOAT,HEX,OCTAL or BINARSUB" +
+            throw new CriticalParseException("expecting <ID or INTEGER,FLOAT or BINARSUB" +
                     " or STRING or OPEN_BRACKET>, but found is <"
                     + lexerList.getLookahead().getType()
                     + ":" + lexerList.getLookahead().getValue()
@@ -590,7 +591,7 @@ public class Parser {
                 }
             }
         } else {
-            throw new CriticalParseException("expecting <" + "OPEN_BRACKET or ID or INTEGER,FLOAT,HEX,OCTAL or STRING"
+            throw new CriticalParseException("expecting <" + "OPEN_BRACKET or ID or INTEGER,FLOAT or STRING"
                     + ">, but found is <"+ lexerList.getLookahead().getType() +
                     ":" + lexerList.getLookahead().getValue()
                     + "> in " + lexerList.getLookahead().getLocation());

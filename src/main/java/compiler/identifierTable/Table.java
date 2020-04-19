@@ -15,6 +15,7 @@ import compiler.parser.AST.value.CallArrayMember;
 import compiler.parser.AST.value.FuncCall;
 import compiler.parser.AST.value.GenericValue;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Table implements GenericUnit {
@@ -23,6 +24,7 @@ public class Table implements GenericUnit {
     private Table parentTable = null;
     private NodeStatement node;
     private Map<String, String> listInit =  new HashMap<>();
+    private Map<String,String>previousVariable = new HashMap<>();
 
     public void setNameTable(String nameTable) {
         this.nameTable = nameTable;
@@ -109,8 +111,6 @@ public class Table implements GenericUnit {
     private void addInitNode(NodeInit nodeInit) throws SemanticException {
         ForkInit tmpForkInit = nodeInit.getForkInit();
 
-
-        List<NodeInit> initTypes = new ArrayList<>();
         if (tmpForkInit instanceof ForkInitVar ||
                 tmpForkInit instanceof ForkInitArray) {
             String tmpNameID = nodeInit.getId().getValue();
@@ -119,64 +119,94 @@ public class Table implements GenericUnit {
             if (!containsKey(tmpNameID)) {
                 mainTable.put(tmpNameID, new Id(nodeInit));
             } else {
-                throw new SemanticException(String.format("ERROR semantic: %s already init in table <%s>",
+                throw new SemanticException(String.format("%s already init in table <%s>",
                         tmpNameID,
                         nameTable));
             }
-//            System.out.println(listInit);
             if (tmpForkInit instanceof ForkInitVar) {
                 if (!checkExpression(((ForkInitVar) tmpForkInit).getExpression())) {
-                    throw new SemanticException(String.format("ERROR semantic: %s not init in table <%s>",
+                    throw new SemanticException(String.format("%s not init in table <%s>",
                             tmpForkInit,
                             nameTable));
                 }
             }
             if (tmpForkInit instanceof ForkInitVar) {
                 String tmpNameID1 = nodeInit.getId().getValue();
-                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("INTEGER")) {
-                    switch (listInit.get(tmpNameID1)) {
-                        case "INT":
-                            break;
-                        case "INTEGER":
-                            break;
-                        default:
-                            throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
-                                    listInit.get(tmpNameID1),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+
+                String nameFunc = ((ForkInitVar)nodeInit.getForkInit()).getExpression().getlValue().getValue().getValue();
+
+                if(((ForkInitVar) nodeInit.getForkInit()).getExpression().getlValue() instanceof FuncCall) {
+                    if(!nodeInit.getDataType().getType().equals((((NodeInit)((Table)this.parentTable.mainTable.get(nameFunc)).getNode()).getDataType().getType()))) {
+                        throw new SemanticException(String.format("error type variable: expected <%s> bun <%s> found in <%d:%d>",
+                                (((NodeInit)((Table)this.parentTable.mainTable.get(nameFunc)).getNode()).getDataType().getType()),
+                                nodeInit.getDataType().getType(),
+                                nodeInit.getDataType().getLocation().getRow(),
+                                nodeInit.getDataType().getLocation().getCol()));
                     }
                 }
-                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("FLOAT")) {
-                    switch (listInit.get(tmpNameID1)) {
-                        case "FLOAT":
-                            break;
-                        case "FLOOAT":
-                            break;
-                        default:
-                            throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
-                                    listInit.get(tmpNameID1),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
-                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
-                    }
-                }
-                if (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType().equals("FLOOAT")) {
-                    for (int i = 0; i < listInit.size(); i++) {
-                        switch (listInit.get(tmpNameID1)) {
+
+                        switch (((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType()) {
+                            case "INTEGER":
+                                switch (listInit.get(tmpNameID1)) {
+                                    case "INT":
+                                        break;
+                                    case "INTEGER":
+                                        break;
+                                    default:
+                                        throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
+                                                listInit.get(tmpNameID1),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                                }
+                                break;
                             case "FLOAT":
+                                switch (listInit.get(tmpNameID1)) {
+                                    case "FLOAT":
+                                        break;
+                                    case "FLOOAT":
+                                        break;
+                                    default:
+                                        throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
+                                                listInit.get(tmpNameID1),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                                ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                                }
                                 break;
                             case "FLOOAT":
+                                for (int i = 0; i < listInit.size(); i++) {
+                                    switch (listInit.get(tmpNameID1)) {
+                                        case "FLOAT":
+                                            break;
+                                        case "FLOOAT":
+                                            break;
+                                        default:
+                                            throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
+                                                    listInit.get(tmpNameID1),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                                    }
+                                }
                                 break;
-                            default:
-                                throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
-                                        listInit.get(tmpNameID1),
-                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
-                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
-                                        ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                            case "CHAAR":
+                                for (int i = 0; i < listInit.size(); i++) {
+                                    switch (listInit.get(tmpNameID1)) {
+                                        case "CHAR":
+                                            break;
+                                        case "CHAAR":
+                                            break;
+                                        default:
+                                            throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
+                                                    listInit.get(tmpNameID1),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getType(),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getRow(),
+                                                    ((ForkInitVar) tmpForkInit).getExpression().getlValue().getValue().getLocation().getCol()));
+                                    }
+                                }
+                                break;
                         }
-                    }
-                }
             }
         } else if (tmpForkInit instanceof CallFunc) {
             String tmpNameID = nodeInit.getId().getValue();
@@ -190,7 +220,7 @@ public class Table implements GenericUnit {
                 mainTable.put(tmpNameID, newTable);
 
             } else {
-                throw new SemanticException(String.format("ERROR semantic: %s already init in table <%s>",
+                throw new SemanticException(String.format("%s already init in table <%s>",
                         tmpNameID,
                         nameTable));
             }
@@ -200,13 +230,26 @@ public class Table implements GenericUnit {
     private boolean checkExpression(NodeStatement statement) throws SemanticException {
         boolean result = false;
         NodeExpression expr = null;
-
+        NodeInit node = (NodeInit) this.node;
         if (statement instanceof NodeLoop) {
             expr = ((NodeLoop) statement).getExpression();
         } else if (statement instanceof NodeConditional) {
             expr = ((NodeConditional) statement).getExpression();
         } else if (statement instanceof NodeReturn) {
             expr = ((NodeReturn) statement).getExpression();
+            for(int i = 0; i < ((CallFunc)node.getForkInit()).getStatementList().size(); i++) {
+                if(((CallFunc) node.getForkInit()).getStatementList().get(i) instanceof NodeInit) {
+                    if(((NodeInit) ((CallFunc) node.getForkInit()).getStatementList().get(i)).getId().getValue().equals(expr.getlValue().getValue().getValue())) {
+                        if (!listInit.get(((NodeInit) ((CallFunc) node.getForkInit()).getStatementList().get(i)).getId().getValue()).equals(node.getDataType().getType())) {
+                            throw new SemanticException(String.format("error type return variable: expected <%s> bun <%s> found in <%d:%d>",
+                                    node.getDataType().getType(),
+                                    listInit.get(((NodeInit) ((CallFunc) node.getForkInit()).getStatementList().get(i)).getId().getValue()),
+                                    expr.getlValue().getValue().getLocation().getRow(),
+                                    expr.getlValue().getValue().getLocation().getCol()));
+                        }
+                    }
+                }
+            }
         } else if (statement instanceof NodePrintln) {
             expr = ((NodePrintln) statement).getExpression();
         }else if (statement instanceof NodeExpression) {
@@ -258,8 +301,6 @@ public class Table implements GenericUnit {
 
             if(((Attachment) gv).getExpression().getrValue() != null && !listInit.isEmpty()) {
                 if (((Attachment) gv).getExpression().getlValue().getClass().toString().contains("GenericValue") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("GenericValue")) {
-                    System.out.println("1");
-                    System.out.println(listInit.get(nameResult));
                     switch (listInit.get(nameResult)) {
                         case "INT":
                             switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
@@ -268,7 +309,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -280,7 +321,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -294,7 +335,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -307,7 +348,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -321,7 +362,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -333,7 +374,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -347,7 +388,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -359,7 +400,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -367,7 +408,6 @@ public class Table implements GenericUnit {
                             }
                     }
                 } else if (((Attachment) gv).getExpression().getlValue().getClass().toString().contains("Number") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("GenericValue")) {
-                    System.out.println("2");
                     switch (listInit.get(nameResult)) {
                         case "INT":
                             switch (((Attachment) gv).getExpression().getlValue().getValue().getType()) {
@@ -376,7 +416,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -389,7 +429,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -403,7 +443,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -415,7 +455,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -429,7 +469,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -441,7 +481,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -455,7 +495,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -467,7 +507,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             (listInit.get(((Attachment) gv).getExpression().getrValue().getValue().getValue())),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -475,7 +515,6 @@ public class Table implements GenericUnit {
                             }
                     }
                 } else if(((Attachment) gv).getExpression().getlValue().getClass().toString().contains("GenericValue") && ((Attachment) gv).getExpression().getrValue().getClass().toString().contains("Number")) {
-                    System.out.println("3");
                     switch (listInit.get(nameResult)) {
                         case "INT":
                             switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
@@ -484,7 +523,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -497,7 +536,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -505,27 +544,25 @@ public class Table implements GenericUnit {
                             }
                             break;
                         case "INTEGER":
-                            System.out.println(listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue()));
                             switch (listInit.get(((Attachment) gv).getExpression().getlValue().getValue().getValue())) {
                                 case "INTEGER":
                                     break;
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getCol()));
                             }
-                            System.out.println(((Attachment) gv).getExpression().getrValue().getValue().getType());
                             switch (((Attachment) gv).getExpression().getrValue().getValue().getType()) {
                                 case "INTEGER":
                                     break;
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -539,7 +576,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -551,7 +588,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -565,7 +602,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -577,7 +614,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -593,7 +630,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getValue(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -606,7 +643,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -620,7 +657,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -632,7 +669,7 @@ public class Table implements GenericUnit {
                                 case "INT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -646,7 +683,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -658,7 +695,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -671,7 +708,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getlValue().getValue().getLocation().getRow(),
@@ -683,7 +720,7 @@ public class Table implements GenericUnit {
                                 case "FLOOAT":
                                     break;
                                 default:
-                                    throw new SemanticException(String.format("ERROR semantic: Expected <%s> but <%s> found in <%d:%d>",
+                                    throw new SemanticException(String.format("Expected <%s> but <%s> found in <%d:%d>",
                                             listInit.get(nameResult),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getType(),
                                             ((Attachment) gv).getExpression().getrValue().getValue().getLocation().getRow(),
@@ -713,7 +750,7 @@ public class Table implements GenericUnit {
 
         if (node != null) {
             if (node instanceof NodeInit) {
-//                    System.out.println(((NodeInit) node).getDataType().getType());
+
                 ForkInit tmpForkInit = ((NodeInit) node).getForkInit();
 
                 if (tmpForkInit instanceof CallFunc) {
@@ -723,9 +760,10 @@ public class Table implements GenericUnit {
         }
         if (argsInitList != null) {
             if (argsInitList.size() != ((FuncCall) gv).getArgsCall().size()) {
-                throw new SemanticException(String.format("ERROR semantic: invalid count args <%s> in %s",
+                throw new SemanticException(String.format("invalid count args <%s> in <%d:%d>",
                         gv.getValue(),
-                        nameTable));
+                        gv.getValue().getLocation().getRow(),
+                        gv.getValue().getLocation().getCol()));
             }
         }
 
@@ -734,9 +772,12 @@ public class Table implements GenericUnit {
             if (!argsInitList.get(i).getDataType().getValue()
                     .equals(((Id) dataType).getNode().getDataType().getValue()))
             {
-                throw new SemanticException(String.format("ERROR semantic: invalid type args <%s> in %s",
-                        gv.getValue(),
-                        nameTable));
+                throw new SemanticException(String.format("invalid type args <%s> '%s %s' in <%d:%d>",
+                        gv.getValue().getValue(),
+                        argsInitList.get(i).getDataType().getValue(),
+                        argsInitList.get(i).getId().getValue(),
+                        gv.getValue().getLocation().getRow(),
+                        gv.getValue().getLocation().getCol()));
             }
 
             result = checkGenericValue(((FuncCall) gv).getArgsCall().get(i));
@@ -807,12 +848,12 @@ public class Table implements GenericUnit {
             if (statement instanceof NodeScanln) {
                 String id = ((NodeScanln) statement).getId().getValue();
                 if (!containsKey(id)) {
-                    throw new SemanticException(String.format("ERROR semantic: variable <%s> not init in table <%s>",
+                    throw new SemanticException(String.format("variable <%s> not init in table <%s>",
                             id,
                             nameTable));
                 }
             } else if (!checkExpression(statement)) {
-                throw new SemanticException(String.format("ERROR semantic: variable <%s> not init in table <%s>",
+                throw new SemanticException(String.format("variable <%s> not init in table <%s>",
                         statement,
                         nameTable));
             }

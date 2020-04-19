@@ -8,7 +8,6 @@ public class Test {
             }
             i = i + 1;
         }
-
         return min;
     }
 

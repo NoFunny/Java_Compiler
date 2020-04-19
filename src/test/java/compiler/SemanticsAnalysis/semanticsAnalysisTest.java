@@ -27,7 +27,7 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: Expected <FLOOAT> but <INTEGER> found in <17:21>"));
+            assertThat(e.getMessage(), is("Expected <FLOOAT> but <INTEGER> found in <17:21>"));
         }
     }
     //Тест на ошибку в арифметических операциях, при несовпадении типов данных
@@ -42,7 +42,7 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: Expected <INT> but <FLOOAT> found in <19:14>"));
+            assertThat(e.getMessage(), is("Expected <INT> but <FLOOAT> found in <19:14>"));
         }
     }
 
@@ -58,7 +58,7 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: invalid type args <loc<23:25> ID 'getMin'> in MAIN_METHOD"));
+            assertThat(e.getMessage(), is("invalid type args <getMin> 'int size' in <23:25>"));
         }
     }
 
@@ -74,7 +74,7 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: invalid count args <loc<23:25> ID 'getMin'> in MAIN_METHOD"));
+            assertThat(e.getMessage(), is("invalid count args <loc<23:25> ID 'getMin'> in <23:25>"));
         }
     }
 
@@ -90,7 +90,7 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: size already init in table <MAIN_METHOD>"));
+            assertThat(e.getMessage(), is("size already init in table <MAIN_METHOD>"));
         }
     }
 
@@ -106,7 +106,55 @@ public class semanticsAnalysisTest{
             identifierTable.go(root);
             fail();
         } catch (SemanticException e) {
-            assertThat(e.getMessage(), is("ERROR semantic: variable <c> not init in table <MAIN_METHOD>"));
+            assertThat(e.getMessage(), is("variable <c> not init in table <MAIN_METHOD>"));
+        }
+    }
+
+    //Тест на проверку несовпадения типов функции и Return(Ошибка в обьявлении)
+    @Test
+    public void semanticsTest7() {
+        String input = readFile("src/main/resources/semanticsTest7.java");
+        Tokenizer lexer = new Tokenizer(input);
+        Parser parser = new Parser(new LexerList(lexer));
+        NodeClass root = parser.go();
+        Table identifierTable = new Table();
+        try {
+            identifierTable.go(root);
+            fail();
+        } catch (SemanticException e) {
+            assertThat(e.getMessage(), is("error type return variable: expected <CHAAR> bun <INT> found in <11:19>"));
+        }
+    }
+
+    //Тест на проверку несовпадения типов функции и Return(Ошибка переменной Return)
+    @Test
+    public void semanticsTest8() {
+        String input = readFile("src/main/resources/semanticsTest8.java");
+        Tokenizer lexer = new Tokenizer(input);
+        Parser parser = new Parser(new LexerList(lexer));
+        NodeClass root = parser.go();
+        Table identifierTable = new Table();
+        try {
+            identifierTable.go(root);
+            fail();
+        } catch (SemanticException e) {
+            assertThat(e.getMessage(), is("error type return variable: expected <INT> bun <FLOOAT> found in <11:19>"));
+        }
+    }
+
+    //Тест на проверку переменной, которой присваевается результат работы функции
+    @Test
+    public void semanticsTest9() {
+        String input = readFile("src/main/resources/semanticsTest9.java");
+        Tokenizer lexer = new Tokenizer(input);
+        Parser parser = new Parser(new LexerList(lexer));
+        NodeClass root = parser.go();
+        Table identifierTable = new Table();
+        try {
+            identifierTable.go(root);
+            fail();
+        } catch (SemanticException e) {
+            assertThat(e.getMessage(), is("error type variable: expected <INT> bun <CHAAR> found in <22:13>"));
         }
     }
 

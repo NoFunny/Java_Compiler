@@ -9,7 +9,7 @@ node [shape="box", style="filled", margin="0.1"];
 "ARGS2" -> "args4" ;
 "init1" -> "ARGS2";
 "STATEMENTS5" [label="STATEMENTS"];
-"init6" [label="INIT\nDataType=float\nid=i\nType=VAR"];
+"init6" [label="INIT\nDataType=int\nid=i\nType=VAR"];
 "VAR7" [label="VAR"];
 "EXPRESSION8" [label="EXPRESSION"];
 "NUMBER9" [label="NUMBER\n0"];
