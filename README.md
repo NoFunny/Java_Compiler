@@ -1,6 +1,5 @@
 ## Build-status
-[![Build Status](https://travis-ci.org/NoFunny/Java_Compiler.svg?branch=master)](https://travis-ci.org/NoFunny/Java_Compiler)
-
+[![Build Status](https://travis-ci.com/NoFunny/Java_Compiler.svg?branch=master)](https://travis-ci.com/NoFunny/Java_Compiler)
 # Java compiler
 
 ## Project download
