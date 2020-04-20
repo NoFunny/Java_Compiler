@@ -22,8 +22,6 @@ gradle build
 ./gradlew run
 ```
 
-##### Don't forget to change the path to the file with the test programs!!!
-
 
 #### You can also use IntelliJIDEA for running project
 ![Image](https://github.com/NoFunny/Java_Compiler/raw/master/src/main/resources/info.jpeg)
