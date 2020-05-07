@@ -9,8 +9,10 @@ import compiler.parser.AST.Node;
 import compiler.parser.AST.NodeArgsInit;
 import compiler.parser.AST.NodeClass;
 import compiler.parser.AST.statement.*;
+import compiler.parser.AST.value.Attachment;
 import compiler.parser.AST.value.CallArrayMember;
 import compiler.parser.AST.value.GenericValue;
+import compiler.parser.AST.value.Number;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -127,16 +129,12 @@ public class CodeGen {
         } else if (node.getDataType().getType().equals("FLOAT") || node.getDataType().getType().equals("FLOOAT")) {
             fw.append("\tmovss\t .LC").append(String.valueOf(reservReg)).append("(%rip), -%xmm0\n");
             reservReg+=1;
-//            offsetInit += 4;
             offsetFloat += 4;
             fw.append("\tmovss\t %xmm0,".concat(String.format(" -%d(rbp)\n", offsetFloat + offsetInit)));
             pointVarInit.put(node.getId().getValue(), offsetFloat + offsetInit);
         }
     }
-
-    private void addConditionalNode(NodeStatement statement, FileWriter fw) throws IOException {
-        fw.append(".L"+ cntJmp +":\n");
-        cntJmp++;
+    private void checkOnGenericValueOrCallArrayMember(NodeStatement statement, FileWriter fw) throws IOException {
         if(((NodeConditional)statement).getExpression().getlValue() instanceof CallArrayMember) {
 //            System.out.println(((ArrayMemberId) ((CallArrayMember) ((NodeConditional) statement).getExpression().getlValue()).getArrayMember()).getId().getValue());
             if (pointInit.get(((ArrayMemberId) ((CallArrayMember) ((NodeConditional) statement).getExpression().getlValue()).getArrayMember()).getId().getValue()) != null) {
@@ -156,8 +154,7 @@ public class CodeGen {
             }
             fw.append("\taddq\t%rdx, %rax\n");
             fw.append("\tmovl\t(%rax), %eax\n");
-        }
-        if(((NodeConditional)statement).getExpression().getlValue() instanceof GenericValue) {
+        }else if(((NodeConditional)statement).getExpression().getlValue() instanceof GenericValue) {
             if (((NodeConditional) statement).getExpression().getlValue() instanceof GenericValue) {
                 if (pointInit.containsKey(((NodeConditional) statement).getExpression().getlValue().getValue().getValue())) {
                     fw.append("\tmovl\t-" + pointInit.get(((NodeConditional) statement).getExpression().getlValue().getValue().getValue()) + "(%rbp), %eax\n");
@@ -184,13 +181,171 @@ public class CodeGen {
                 fw.append("\tcmpl\t%eax, -" + pointVarInit.get(((NodeConditional) statement).getExpression().getrExpression().getlValue().getValue().getValue()) + "(%rbp)\n");
             }
         }
-        if(((NodeConditional) statement).getExpression().getOperator().getValue().equals("LESS")) {
-            fw.append("\tjle\t.L").append(String.valueOf(cntJmp)).append("\n");
-        }else if(((NodeConditional) statement).getExpression().getOperator().getValue().equals("GREATER")) {
-            fw.append("\tjge\t.L").append(String.valueOf(cntJmp)).append("\n");
+    }
+    private void addConditionalNode(NodeStatement statement, FileWriter fw) throws IOException {
+        fw.append(".L"+ cntJmp +":\n");
+        cntJmp++;
+       checkOnGenericValueOrCallArrayMember(statement, fw);
+        if(((NodeConditional)statement).getExpression().getOperator().getValue().getType().equals("LESS")) {
+            fw.append("\tjle\t.L"+ cntJmp +"\n");
+//            cntJmp++;
+        }else if(((NodeConditional)statement).getExpression().getOperator().getValue().getType().equals("GREATHER")) {
+            fw.append("\tjge\t.L"+ cntJmp +"\n");
+//            cntJmp++;
+        }
+        for(NodeStatement expression : ((NodeConditional) statement).getStatementList()) {
+            if(((NodeExpression)expression).getlValue() instanceof Attachment) {
+                nodeAttachment((Attachment) ((NodeExpression) expression).getlValue(), fw);
+            }
         }
         fw.append(".L"+ cntJmp +":\n");
         cntJmp++;
+    }
+
+    private void nodeAttachment(Attachment expression, FileWriter fw) throws IOException {
+        if (expression.getExpression() instanceof NodeExpression) {
+            if (expression.getExpression().getrValue() == null) {
+                if (expression.getExpression().getlValue() instanceof CallArrayMember) {
+                    if (pointVarInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tmovl\t-" + pointVarInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "(%rbp), %eax\n");
+                    } else if (pointInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tmovl\t-" + pointInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "(%rbp), %eax\n");
+                    }
+                    fw.append("\tcltq\n");
+                    if (pointVarInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tleaq\t0(,%rax," + pointVarInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                    } else if (pointInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tleaq\t0(,%rax," + pointInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                    }
+                    if (pointVarInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                        fw.append("\tmovq\t-" + pointVarInit.get(expression.getExpression().getlValue().getValue().getValue()) + "(%rbp), %rax\n");
+                    } else if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                        fw.append("\tmovq\t-" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + "(%rbp), %rax\n");
+                    }
+                    fw.append("\taddq\t%rdx, %rax\n");
+                    fw.append("\tmovl\t(%rax), %eax\n");
+                    if (pointVarInit.containsKey(expression.getValue().getValue())) {
+                        fw.append("\tmovl\t%eax, -" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                    } else if (pointInit.containsKey(expression.getValue().getValue())) {
+                        fw.append("\tmovl\t%eax, -" + pointInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                    }
+                    return;
+                }
+            }
+                int offsetExpr = 0;
+                if (expression.getExpression().getlValue() instanceof Number && expression.getExpression().getrValue() instanceof Number) {
+                    if (expression.getExpression().getlValue().getValue().getType().equals("INTEGER") || expression.getExpression().getlValue().getValue().getType().equals("FLOAT")) {
+                        if (expression.getExpression().getOperator().getValue().getType().equals("BINARPLUS"))
+                            fw.append("\tmovl\t $" + (Integer.parseInt(expression.getExpression().getlValue().getValue().getValue()) + Integer.parseInt(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                        else if (expression.getExpression().getOperator().getValue().getType().equals("BINARSUB"))
+                            fw.append("\tmovl\t $" + (Integer.parseInt(expression.getExpression().getlValue().getValue().getValue()) - Integer.parseInt(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                        return;
+                    }
+                } else if (expression.getExpression().getlValue() instanceof GenericValue && expression.getExpression().getrValue() instanceof GenericValue) {
+                    if (expression.getExpression().getlValue().getValue().getType().equals("INT")) {
+                        checkGenericValue(expression, fw);
+                    } else if (expression.getExpression().getlValue().getValue().getType().equals("FLOOAT")) {
+                    }
+
+                }
+                if (expression.getExpression().getlValue() instanceof Number) {
+                    if (expression.getExpression().getlValue().getValue().getType().equals("INTEGER")) {
+                        offsetExpr += 4;
+                        fw.append("\tmovl\t-" + offsetExpr + "(%rbp), %eax\n");
+                    } else if (expression.getExpression().getlValue().getValue().getType().equals("FLOAT")) {
+                        offsetExpr += 4;
+                        fw.append("\tmovl\t-" + offsetExpr + "(%rbp), %eax\n");
+                    } else if (expression.getExpression().getlValue().getValue().getType().equals("CHAR")) {
+                        offsetExpr += 4;
+                        fw.append("\tmovl\t-" + offsetExpr + "(%rbp), %eax\n");
+                    }
+                    if (expression.getExpression().getrValue() instanceof CallArrayMember) {
+                        fw.append("\tcltq\n");
+                        if (pointVarInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getrValue()).getArrayMember()).getId().getValue())) {
+                            fw.append("\tleaq\t0(,%rax," + pointVarInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getrValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                        } else if (pointInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getrValue()).getArrayMember()).getId().getValue())) {
+                            fw.append("\tleaq\t0(,%rax," + pointInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getrValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                        }
+                        if (pointVarInit.containsKey(expression.getExpression().getrValue().getValue().getValue())) {
+                            fw.append("\tmovq\t -" + pointVarInit.get(expression.getExpression().getrValue().getValue().getValue()) + "(%rbp), %rax\n");
+                        } else if (pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue())) {
+                            fw.append("\tmovq\t -" + pointInit.get(expression.getExpression().getrValue().getValue().getValue()) + "(%rbp), %rax\n");
+                        } else if (expression.getExpression().getlValue() instanceof GenericValue) {
+                            if (expression.getExpression().getrValue() instanceof CallArrayMember) {
+
+                            } else if (expression.getExpression().getrValue() instanceof Number) {
+
+                            }
+                        }
+                    }
+                } else if (expression.getExpression().getlValue() instanceof CallArrayMember) {
+                    offsetExpr += 4;
+                    fw.append("\tmovl\t-" + offsetExpr + "(%rbp), %eax\n");
+                    fw.append("\tcltq\n");
+                    if (pointVarInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tleaq\t0(,%rax," + pointVarInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                    } else if (pointInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
+                        fw.append("\tleaq\t0(,%rax," + pointInit.get(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue()) + "), %rdx\n");
+                    }
+                    if (pointVarInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                        fw.append("\tmovq\t -" + pointVarInit.get(expression.getExpression().getlValue().getValue().getValue()) + "(%rbp), %rax\n");
+                    } else if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                        fw.append("\tmovq\t -" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + "(%rbp), %rax\n");
+                    }
+                }
+
+                //Осталось условие только для genericValue
+                fw.append("\taddq\t%rdx, %rax\n");
+                if (expression.getExpression().getOperator().getValue().getType().equals("BINARPLUS")) {
+                    fw.append("\taddl\t$" + expression.getExpression().getlValue().getValue().getValue() + ", %eax\n");
+                } else if (expression.getExpression().getOperator().getValue().getType().equals("BINARSUB")) {
+                    if (expression.getExpression().getlValue() instanceof CallArrayMember) {
+                        fw.append("\tmovl\t(%rax), %eax\n\tsubl\t$" + expression.getExpression().getrValue().getValue().getValue() + ", %eax\n");
+                    } else {
+                        if (expression.getExpression().getlValue().toString().contains("GenericValue")) {
+                            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\tmovl\t(%rax), %eax\n\tmovl\t$" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + ",%edx\n\tsubl\t%eax, %edx\n\tmovl\t%edx,%eax\n");
+                            } else if (pointVarInit.containsKey(expression.getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\tmovl\t(%rax), %eax\n\tmovl\t$" + pointVarInit.get(expression.getExpression().getlValue().getValue().getValue()) + ",%edx\n\tsubl\t%eax, %edx\n\tmovl\t%edx,%eax\n");
+                            }
+                        } else if (expression.getExpression().getlValue().toString().contains("Number")) {
+                            if (expression.getExpression().getlValue().getValue().getType().equals("INTEGER")) {
+                                fw.append("\tmovl\t(%rax), %eax\n\tmovl\t$" + expression.getExpression().getlValue().getValue().getValue() + ",%edx\n\tsubl\t%eax, %edx\n\tmovl\t%edx, %eax\n");
+                            } else if (expression.getExpression().getlValue().getValue().getType().equals("FLOAT")) {
+                                fw.append("\tmovl\t(%rax), %eax\n\tcvtsi2sdl\t %eax, %xmm1\n\tmovsd\t.LC" + reservReg + "(%rip), %xmm0\n\tsubsd\t%smm1,%xmm0\n\tcvttsd2sil\t%xmm0, %eax\n");
+                                reservReg++;
+                            }
+                        }
+                    }
+                }
+                if (pointVarInit.containsKey(expression.getValue().getValue())) {
+                    fw.append("\tmovl\t%eax, -" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                } else if (pointInit.containsKey(expression.getValue().getValue())) {
+                    fw.append("\tmovl\t%eax, -" + pointInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+                }
+        }
+    }
+
+    private void checkGenericValue(Attachment expression, FileWriter fw) throws IOException {
+        if (expression.getExpression().getOperator().getValue().getType().equals("BINARPLUS")) {
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + pointInit.get(expression.getExpression().getrValue().getValue().getValue()) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointVarInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointVarInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + pointVarInit.get(expression.getExpression().getlValue().getValue().getValue()) + pointVarInit.get(expression.getExpression().getrValue().getValue().getValue()) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointVarInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + pointVarInit.get(expression.getExpression().getrValue().getValue().getValue()) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + pointInit.get(expression.getExpression().getlValue().getValue().getValue()) + pointInit.get(expression.getExpression().getrValue().getValue().getValue()) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+        } else if (expression.getExpression().getOperator().getValue().getType().equals("BINASUB")) {
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + (pointInit.get(expression.getExpression().getlValue().getValue().getValue()) - pointInit.get(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointVarInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointVarInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + (pointVarInit.get(expression.getExpression().getlValue().getValue().getValue()) - pointVarInit.get(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointVarInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + (pointInit.get(expression.getExpression().getlValue().getValue().getValue()) - pointVarInit.get(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+            if (pointInit.containsKey(expression.getExpression().getlValue().getValue().getValue()) || pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue()))
+                fw.append("\tmovl\t $" + (pointInit.get(expression.getExpression().getlValue().getValue().getValue()) - pointInit.get(expression.getExpression().getrValue().getValue().getValue())) + ",\t-" + pointVarInit.get(expression.getValue().getValue()) + "(%rbp)\n");
+        }
     }
 
 
@@ -207,9 +362,33 @@ public class CodeGen {
             fw.append("\tcmpl\t -" + pointInit.get(statement.getExpression().getrExpression().getlValue().getValue().getValue()) + "(%rbp), %eax\n");
         }
         fw.append("\tjl\t.L"+cntJmp+"\n");
+        if(pointInit.containsKey(statement.getExpression().getlValue().getValue().getValue())) {
+            fw.append("\tmovl\t-"+ pointInit.get(statement.getExpression().getlValue().getValue().getValue()) +"(%rbp), %eax\n");
+        }else if (pointVarInit.containsKey(statement.getExpression().getlValue().getValue().getValue())) {
+            fw.append("\tmovl\t-"+ pointVarInit.get(statement.getExpression().getlValue().getValue().getValue()) +"(%rbp), %eax\n");
+        }
+        fw.append("\tpopq\t%rbp\n\tret\n");
         for(NodeStatement node : statement.getStatementList()) {
             if(node instanceof NodeConditional) {
                 addConditionalNode(node, fw);
+            }else if(node instanceof NodeExpression) {
+                if(((NodeExpression) node).getlValue() instanceof Attachment) {
+                    if(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue() != null && ((Attachment) ((NodeExpression) node).getlValue()).getExpression().getrValue() != null) {
+                        if(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getOperator().getValue().getType().equals("BINARPLUS")) {
+                            if(pointInit.containsKey(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\taddl\t$"+ ((Attachment) ((NodeExpression) node).getlValue()).getExpression().getrValue().getValue().getValue() +", -"+ pointInit.get(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue()) +"(%rbp)\n");
+                            }else if(pointVarInit.containsKey(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\taddl\t$" + ((Attachment) ((NodeExpression) node).getlValue()).getExpression().getrValue().getValue().getValue() + ", -" + pointVarInit.get(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue()) + "(%rbp)\n");
+                            }
+                        }else if(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getOperator().getValue().getType().equals("BINARSUB")) {
+                            if(pointInit.containsKey(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\tsubl\t$"+ ((Attachment) ((NodeExpression) node).getlValue()).getExpression().getrValue().getValue().getValue() +", -"+ pointInit.get(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue()) +"(%rbp)\n");
+                            }else if(pointVarInit.containsKey(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue())) {
+                                fw.append("\tsubl\t$" + ((Attachment) ((NodeExpression) node).getlValue()).getExpression().getrValue().getValue().getValue() + ", -" + pointVarInit.get(((Attachment) ((NodeExpression) node).getlValue()).getExpression().getlValue().getValue().getValue()) + "(%rbp)\n");
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -220,6 +399,8 @@ public class CodeGen {
     private void addPrintlNode(NodeStatement statement, FileWriter fw) {
     }
 
-    private void addReturnNode(NodeStatement statement, FileWriter fw) {
+    private void addReturnNode(NodeStatement statement, FileWriter fw) throws IOException {
+//        if(((NodeReturn)statement).getExpression() instanceof NodeExpression)
+//            fw.append("\tpopq\t%rbp\n\tret");
     }
 }

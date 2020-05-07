@@ -15,6 +15,9 @@ getMin:
 	movl	 -4(%rbp), %eax
 	cmpl	 -28(%rbp), %eax
 	jl	.L3
+	movl	-4(%rbp), %eax
+	popq	%rbp
+	ret
 .L3:
 	movl	 -4(%rbp), %eax
 	cltq
@@ -22,7 +25,14 @@ getMin:
 	movq	 -24(%rbp), %rax
 	addq	%rdx, %rax
 	movl	(%rax), %eax
-	movl	-24(%rbp), %eax
 	cmpl	%eax, -8(%rbp)
 	jle	.L4
+	movl	-4(%rbp), %eax
+	cltq
+	leaq	0(,%rax,4), %rdx
+	movq	-24(%rbp), %rax
+	addq	%rdx, %rax
+	movl	(%rax), %eax
+	movl	%eax, -8(%rbp)
 .L4:
+	addl	$1, -4(%rbp)
