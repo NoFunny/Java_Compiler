@@ -13,6 +13,7 @@ public class ArrayMemberNumber extends ArrayMember{
         return numberMember;
     }
 
+
     @Override
     public int visit(String rootNode, int index, StringBuilder sb) {
         String nameNode = "AR_MEM_NUM";

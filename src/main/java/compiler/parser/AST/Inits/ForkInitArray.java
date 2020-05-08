@@ -2,11 +2,14 @@ package compiler.parser.AST.Inits;
 
 import compiler.lexer.Token;
 import compiler.parser.AST.ArrayMember.ArrayMember;
+import compiler.parser.AST.ArrayMember.ArrayMemberId;
 import compiler.parser.AST.TypeInit;
 
 public class ForkInitArray extends ForkInit{
     private Token dataType;
     private ArrayMember index;
+
+    public ArrayMemberId getIndex() { return (ArrayMemberId) index;}
 
     public void setDataType(Token dataType) {
         this.dataType = dataType;
@@ -15,6 +18,7 @@ public class ForkInitArray extends ForkInit{
     public void setIndex(ArrayMember index) {
         this.index = index;
     }
+
 
     @Override
     public void chooseType() {
