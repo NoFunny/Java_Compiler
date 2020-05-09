@@ -21,20 +21,31 @@ import java.util.Map;
 
 public class CodeGen {
     private static final File dir = new File("main.asm");
-    private static int offset = 0;
-    private static int offsetInit = 0;
-    private static int offsetFloat = 4;
-    private static int reservReg = 0;
-    private static int cntJmp = 1;
+    private static int offset;
+    private static int offsetInit;
+    private static int offsetFloat;
+    private static int reservReg;
+    private static int cntJmp;
     private static Map<String, Integer> pointInit = new HashMap<>();
     private static Map<String,Integer> pointVarInit = new HashMap<>();
     private static NodeStatement returnVariable;
     private static NodeScanln scanlnNode;
-    private static int offsetForScanln = 0;
-    private static int stringForOutInput = 0;
-    private static String startLoop = "";
+    private static int offsetForScanln;
+    private static int stringForOutInput;
+    private static String startLoop;
 
     public void go(NodeClass root, Table idTable) throws IOException {
+        offset = 0;
+        offsetInit = 0;
+        offsetFloat = 4;
+        reservReg = 0;
+        cntJmp = 1;
+        stringForOutInput = 0;
+        offsetForScanln = 0;
+        startLoop = "";
+        scanlnNode = null;
+        pointVarInit.clear();
+        pointInit.clear();
         FileWriter fw = new FileWriter(dir.getName(), false);
         next(root, fw);
         fw.close();
@@ -190,11 +201,9 @@ public class CodeGen {
         fw.append("\tleaq\t0(,%rax,4), %rdx\n");
         fw.append("\tmovl\t$16, %eax\n\tsubq\t$1, %rax\n\taddq\t%rdx, %rax\n\tmovl\t$16, %ecx\n\tmovl\t$0, %edx\n\tdivq\t%rcx\n");
         fw.append("\timulq\t$16, %rax, %rax\n\tsubq\t%rax, %rsp\n\tmovq\t%rsp, %rax\n\taddq\t$3, %rax\n\tshrq\t$2, %rax\n\tsalq\t$2, %rax\n");
-        System.out.println(offsetInit);
-        System.out.println(offset);
         offsetInit+=16;
         pointVarInit.put(((NodeInit) statement).getId().getValue(), offsetInit);
-        fw.append("\tmovq\t%rax, -"+ offsetInit +"(%rbp)\n");
+        fw.append("\tmovq\t%rax, -").append(String.valueOf(offsetInit)).append("(%rbp)\n");
     }
 
     private void addStatement(NodeStatement statement, FileWriter fw) throws IOException {
@@ -237,17 +246,17 @@ public class CodeGen {
                 offsetInit += 4;
                 if(scanlnNode != null) {
                     if (node.getId().getValue().equals(scanlnNode.getId().getValue())) {
-                        fw.append("\tmovl\t $"+((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()+", -"+offsetForScanln+"(%rbp)\n");
+                        fw.append("\tmovl\t $").append(((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()).append(", -").append(String.valueOf(offsetForScanln)).append("(%rbp)\n");
                         pointVarInit.put(node.getId().getValue(), offsetForScanln);
                     }else {
                         offsetInit = 52;
-                        fw.append("\tmovl\t $"+((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()+", -"+offsetInit+"(%rbp)\n");
+                        fw.append("\tmovl\t $").append(((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()).append(", -").append(String.valueOf(offsetInit)).append("(%rbp)\n");
                         pointVarInit.put(node.getId().getValue(), offsetInit);
                     }
                     break;
 
                 } else {
-                    fw.append("\tmovl\t $"+((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()+", -"+  offsetInit +"(%rbp)\n");
+                    fw.append("\tmovl\t $").append(((ForkInitVar) node.getForkInit()).getExpression().getlValue().getValue().getValue()).append(", -").append(String.valueOf(offsetInit)).append("(%rbp)\n");
                     pointVarInit.put(node.getId().getValue(), offsetInit);
                 }
                 break;
@@ -257,7 +266,7 @@ public class CodeGen {
                 break;
             case "FLOAT":
             case "FLOOAT":
-                fw.append("\tmovss\t .FL").append(String.valueOf(reservReg)).append("(%rip), -%xmm0\n");
+                fw.append("\tmovss\t .FL").append(String.valueOf(reservReg)).append("(%rip), %xmm0\n");
                 reservReg += 1;
                 offsetFloat += 4;
                 fw.append("\tmovss\t %xmm0, -"+ offsetFloat + offsetInit +"(%rbp)\n");
@@ -284,12 +293,14 @@ public class CodeGen {
             }
             fw.append("\taddq\t%rdx, %rax\n");
             fw.append("\tmovl\t(%rax), %eax\n");
-        }else if(((NodeConditional)statement).getExpression().getlValue() instanceof GenericValue) {
-            if (((NodeConditional) statement).getExpression().getlValue() instanceof GenericValue) {
+        }else if(((NodeConditional) statement).getExpression().getlValue() != null) {
+            if (((NodeConditional) statement).getExpression().getlValue() != null) {
                 if (pointInit.containsKey(((NodeConditional) statement).getExpression().getlValue().getValue().getValue())) {
                     fw.append("\tmovl\t-").append(String.valueOf(pointInit.get(((NodeConditional) statement).getExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
+                    fw.append("\tmovl\t-").append(String.valueOf(pointInit.get(((NodeConditional) statement).getExpression().getrValue().getValue().getValue()))).append("(%rbp), %eax\n");
                 } else if (pointVarInit.containsKey(((NodeConditional) statement).getExpression().getlValue().getValue().getValue())) {
                     fw.append("\tmovl\t-").append(String.valueOf(pointVarInit.get(((NodeConditional) statement).getExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
+                    fw.append("\tmovl\t-").append(String.valueOf(pointVarInit.get(((NodeConditional) statement).getExpression().getrExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
                 }
             }
             if (((NodeConditional) statement).getExpression().getrExpression().getlValue() instanceof CallArrayMember) {
@@ -304,7 +315,7 @@ public class CodeGen {
                 }
             }
         }
-        if(((NodeConditional) statement).getExpression().getrExpression().getlValue() instanceof GenericValue) {
+        if(((NodeConditional) statement).getExpression().getrExpression().getlValue() != null) {
             if(pointInit.containsKey(((NodeConditional) statement).getExpression().getrExpression().getlValue().getValue().getValue())) {
                 fw.append("\tcmpl\t%eax, -").append(String.valueOf(pointInit.get(((NodeConditional) statement).getExpression().getrExpression().getlValue().getValue().getValue()))).append("(%rbp)\n");
             }else if(pointVarInit.containsKey(((NodeConditional) statement).getExpression().getrExpression().getlValue().getValue().getValue())); {
@@ -318,7 +329,7 @@ public class CodeGen {
        checkOnGenericValueOrCallArrayMember(statement, fw);
         if(((NodeConditional)statement).getExpression().getOperator().getValue().getType().equals("LESS")) {
             fw.append("\tjle\t.L").append(String.valueOf(cntJmp)).append("\n");
-        }else if(((NodeConditional)statement).getExpression().getOperator().getValue().getType().equals("GREATHER")) {
+        }else if(((NodeConditional)statement).getExpression().getOperator().getValue().getType().equals("GREATER")) {
             fw.append("\tjge\t.L").append(String.valueOf(cntJmp)).append("\n");
         }
         for(NodeStatement expression : ((NodeConditional) statement).getStatementList()) {
@@ -331,7 +342,7 @@ public class CodeGen {
     }
 
     private void nodeAttachment(Attachment expression, FileWriter fw) throws IOException {
-        if (expression.getExpression() instanceof NodeExpression) {
+        if (expression.getExpression() != null) {
             if (expression.getExpression().getrValue() == null) {
                 if (expression.getExpression().getlValue() instanceof CallArrayMember) {
                     if (pointVarInit.containsKey(((ArrayMemberId) ((CallArrayMember) expression.getExpression().getlValue()).getArrayMember()).getId().getValue())) {
@@ -369,7 +380,7 @@ public class CodeGen {
                             fw.append("\tmovl\t $").append(String.valueOf(Integer.parseInt(expression.getExpression().getlValue().getValue().getValue()) - Integer.parseInt(expression.getExpression().getrValue().getValue().getValue()))).append(",\t-").append(String.valueOf(pointVarInit.get(expression.getValue().getValue()))).append("(%rbp)\n");
                         return;
                     }
-                } else if (expression.getExpression().getlValue() instanceof GenericValue && expression.getExpression().getrValue() instanceof GenericValue) {
+                } else if (expression.getExpression().getlValue() != null && expression.getExpression().getrValue() != null) {
                     if (expression.getExpression().getlValue().getValue().getType().equals("INT")) {
                         checkGenericValue(expression, fw);
                     } else if (expression.getExpression().getlValue().getValue().getType().equals("FLOOAT")) {
@@ -377,15 +388,16 @@ public class CodeGen {
 
                 }
                 if (expression.getExpression().getlValue() instanceof Number) {
-                    if (expression.getExpression().getlValue().getValue().getType().equals("INTEGER")) {
-                        offsetExpr += 4;
-                        fw.append("\tmovl\t-").append(String.valueOf(offsetExpr)).append("(%rbp), %eax\n");
-                    } else if (expression.getExpression().getlValue().getValue().getType().equals("FLOAT")) {
-                        offsetExpr += 4;
-                        fw.append("\tmovl\t-").append(String.valueOf(offsetExpr)).append("(%rbp), %eax\n");
-                    } else if (expression.getExpression().getlValue().getValue().getType().equals("CHAR")) {
-                        offsetExpr += 4;
-                        fw.append("\tmovl\t-").append(String.valueOf(offsetExpr)).append("(%rbp), %eax\n");
+                    switch (expression.getExpression().getlValue().getValue().getType()) {
+                        case "INTEGER":
+                        case "FLOAT":
+                            offsetExpr += 4;
+                            fw.append("\tmovl\t-").append(String.valueOf(offsetExpr)).append("(%rbp), %eax\n");
+                            break;
+                        case "CHAR":
+                            offsetExpr += 1;
+                            fw.append("\tmovl\t-").append(String.valueOf(offsetExpr)).append("(%rbp), %eax\n");
+                            break;
                     }
                     if (expression.getExpression().getrValue() instanceof CallArrayMember) {
                         fw.append("\tcltq\n");
@@ -398,7 +410,7 @@ public class CodeGen {
                             fw.append("\tmovq\t -").append(String.valueOf(pointVarInit.get(expression.getExpression().getrValue().getValue().getValue()))).append("(%rbp), %rax\n");
                         } else if (pointInit.containsKey(expression.getExpression().getrValue().getValue().getValue())) {
                             fw.append("\tmovq\t -").append(String.valueOf(pointInit.get(expression.getExpression().getrValue().getValue().getValue()))).append("(%rbp), %rax\n");
-                        } else if (expression.getExpression().getlValue() instanceof GenericValue) {
+                        } else if (expression.getExpression().getlValue() != null) {
                             if (expression.getExpression().getrValue() instanceof CallArrayMember) {
 
                             } else if (expression.getExpression().getrValue() instanceof Number) {
@@ -425,7 +437,10 @@ public class CodeGen {
                 //Осталось условие только для genericValue
                 fw.append("\taddq\t%rdx, %rax\n");
                 if (expression.getExpression().getOperator().getValue().getType().equals("BINARPLUS")) {
-                    fw.append("\taddl\t$").append(expression.getExpression().getlValue().getValue().getValue()).append(", %eax\n");
+                    if(expression.getExpression().getlValue() instanceof CallArrayMember)
+                        fw.append("\taddl\t$").append(expression.getExpression().getrValue().getValue().getValue()).append(", %eax\n");
+                    else
+                        fw.append("\taddl\t$").append(expression.getExpression().getlValue().getValue().getValue()).append(", %eax\n");
                 } else if (expression.getExpression().getOperator().getValue().getType().equals("BINARSUB")) {
                     if (expression.getExpression().getlValue() instanceof CallArrayMember) {
                         fw.append("\tmovl\t(%rax), %eax\n\tsubl\t$").append(expression.getExpression().getrValue().getValue().getValue()).append(", %eax\n");
@@ -479,32 +494,23 @@ public class CodeGen {
 
 
     private void addLoopNode(NodeLoop statement, FileWriter fw) throws IOException {
-//        pointVarInit.forEach((x,y) -> System.out.println(y));
         cntJmp+=1;
         fw.append("\tjmp\t\t.L").append(String.valueOf(cntJmp)).append("\n");
         startLoop = startLoop.concat("\n.L").concat(String.valueOf(cntJmp)).concat(":\n");
-//        fw.append("\tjmp\t\t.L").append(String.valueOf(cntJmp)).append("\n.L").append(String.valueOf(cntJmp)).append(":\n");
         cntJmp++;
         startLoop = startLoop.concat("\tmovl\t -").concat(String.valueOf(pointVarInit.get(statement.getExpression().getlValue().getValue().getValue()))).concat("(%rbp), %eax\n");
-//        fw.append("\tmovl\t -").append(String.valueOf(pointVarInit.get(statement.getExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
         if(pointVarInit.containsKey(statement.getExpression().getrExpression().getlValue().getValue().getValue())) {
             startLoop = startLoop.concat("\tcmpl\t -").concat(String.valueOf(pointVarInit.get(statement.getExpression().getrExpression().getlValue().getValue().getValue()))).concat("(%rbp), %eax\n");
-//            fw.append("\tcmpl\t -").append(String.valueOf(pointVarInit.get(statement.getExpression().getrExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
         }else if (pointInit.containsKey(statement.getExpression().getrExpression().getlValue().getValue().getValue())) {
             startLoop = startLoop.concat("\tcmpl\t -").concat(String.valueOf(pointInit.get(statement.getExpression().getrExpression().getlValue().getValue().getValue()))).concat("(%rbp), %eax\n");
-//            fw.append("\tcmpl\t -").append(String.valueOf(pointInit.get(statement.getExpression().getrExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
         }
         startLoop = startLoop.concat("\tjl\t.L").concat(String.valueOf(cntJmp)).concat("\n");
-//        fw.append("\tjl\t.L").append(String.valueOf(cntJmp)).append("\n");
         if(pointInit.containsKey(statement.getExpression().getlValue().getValue().getValue())) {
             startLoop = startLoop.concat("\tmovl\t-").concat(String.valueOf(pointInit.get(((NodeReturn) returnVariable).getExpression().getlValue().getValue().getValue()))).concat("(%rbp), %eax\n");
-//            fw.append("\tmovl\t-").append(String.valueOf(pointInit.get(((NodeReturn) returnVariable).getExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
         }else if (pointVarInit.containsKey(statement.getExpression().getlValue().getValue().getValue())) {
             startLoop = startLoop.concat("\tmovl\t-").concat(String.valueOf(pointVarInit.get(((NodeReturn) returnVariable).getExpression().getlValue().getValue().getValue()))).concat("(%rbp), %eax\n");
-//            fw.append("\tmovl\t-").append(String.valueOf(pointVarInit.get(((NodeReturn) returnVariable).getExpression().getlValue().getValue().getValue()))).append("(%rbp), %eax\n");
         }
         startLoop = startLoop.concat("\tpopq\t%rbp\n\tret\n");
-//        fw.append("\tpopq\t%rbp\n\tret\n");
         for(NodeStatement node : statement.getStatementList()) {
             if(node instanceof NodeConditional) {
                 addConditionalNode(node, fw);
@@ -528,7 +534,6 @@ public class CodeGen {
                 }
             }
         }
-        System.out.println(startLoop);
         fw.append(startLoop);
     }
 
@@ -551,7 +556,6 @@ public class CodeGen {
     }
 
     private void addReturnNode(FileWriter fw) throws IOException {
-//        if(((NodeReturn)statement).getExpression() instanceof NodeExpression)
         fw.append("\tnop\n");
         fw.append("\tmovq\t%rbx, %rsp\n");
         fw.append("\tleaq\t-40(%rbp), %rsp\n");
