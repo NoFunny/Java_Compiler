@@ -26,12 +26,13 @@ gradle build
 #### You can also use IntelliJIDEA for running project
 ![Image](https://github.com/NoFunny/Java_Compiler/raw/master/src/main/resources/info.jpeg)
 
-### Into program:
+### Into the program:
 ```
-1 - <lexical analysis>
-2 - <parse>
-3 - <compile>
-4 - <exit>
+1 - --dumb-token
+2 - --dumb-parser
+3 - --dumb-asm
+4 - --compile
+5 - <exit>
 ```
 
 ### To view the tree, select the contents of the AST.graph file and draw it on the [Site](http://www.webgraphviz.com/)
