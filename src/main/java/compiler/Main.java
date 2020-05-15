@@ -16,7 +16,6 @@ import java.util.Scanner;
 public class Main {
     private static LinkedList<Token> tokenss = new LinkedList<>();
     private static Tokenizer tokenizer = null;
-    private static Parser parser = null;
     private static NodeClass root = null;
     private static Table identifierTable = null;
 
@@ -40,7 +39,7 @@ public class Main {
                     writeTokensToFile(outputDir);
                     break;
                 case 2:
-                    parser = new Parser(new LexerList(tokenizer));
+                    Parser parser = new Parser(new LexerList(tokenizer));
                     root = parser.go();
                     parser.printTreeToFile();
                     identifierTable = new Table();
@@ -56,11 +55,24 @@ public class Main {
                 case 3:
                     CodeGen cg = new CodeGen();
                     cg.go(root, identifierTable);
+                    String asm = readFile("main.asm");
+                    System.out.println(asm);
                     break;
                 case 4:
-                    Lexer = new lex();
-                    Thread threadLex = new Thread(Lexer);
-                    threadLex.start();
+                    tokenizer = new Tokenizer(input);
+                    parser = new Parser(new LexerList(tokenizer));
+                    root = parser.go();
+                    parser.printTreeToFile();
+                    identifierTable = new Table();
+                    try {
+                        identifierTable.go(root);
+                    } catch (SemanticException e) {
+                        System.out.println(String.format("\nERROR [semantic]: %s\n",
+                                e.getMessage()));
+                        return;
+                    }
+                    CodeGen codeGen = new CodeGen();
+                    codeGen.go(root, identifierTable);
                     flag = false;
                     break;
                 case 5:
@@ -97,7 +109,7 @@ public class Main {
             out.close();
         } catch (IOException e) {
             System.out.println("An error was encountered during writing to the file: " + outputDir);
-            System.out.println(e.getStackTrace());
+            e.getStackTrace();
         }
 
     }
