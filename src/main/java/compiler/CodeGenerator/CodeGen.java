@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CodeGen {
-    private static final File dir = new File("main.asm");
+    private static final File dir = new File("main.s");
     private static int offset;
     private static int offsetInit;
     private static int offsetFloat;

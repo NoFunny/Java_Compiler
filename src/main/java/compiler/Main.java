@@ -22,7 +22,13 @@ public class Main {
     static lex Lexer;
     
     public static void main(String[] args) throws IOException {
-        String input = readFile("src/main/resources/alg.java");
+        String FileName = "";
+        if (args.length > 0) {
+            FileName = args[0];
+        } else {
+            FileName = "src/main/resources/alg.java";
+        }
+        String input = readFile(FileName);
         String outputDir = "src/main/resources/out.txt";
         boolean flag = true;
 
@@ -73,6 +79,11 @@ public class Main {
                     }
                     CodeGen codeGen = new CodeGen();
                     codeGen.go(root, identifierTable);
+                    try {
+                        Process proc = Runtime.getRuntime().exec("gcc -no-pie main.s");
+                    }catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     flag = false;
                     break;
                 case 5:
