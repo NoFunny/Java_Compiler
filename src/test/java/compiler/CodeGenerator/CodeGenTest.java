@@ -31,7 +31,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG1.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 
@@ -51,7 +51,7 @@ public class CodeGenTest extends TestCase {
             CodeGen cg = new CodeGen();
             cg.go(root, identifierTable);
             String expected = readFile("src/main/resources/expectedTestCG2.asm");
-            String actual = readFile("main.asm");
+            String actual = readFile("main.s");
             Assert.assertEquals(expected, actual);
         }
 
@@ -71,7 +71,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG3.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 
@@ -91,7 +91,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG4.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 
@@ -111,7 +111,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG5.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 
@@ -131,7 +131,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG6.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 
@@ -151,7 +151,7 @@ public class CodeGenTest extends TestCase {
         CodeGen cg = new CodeGen();
         cg.go(root, identifierTable);
         String expected = readFile("src/main/resources/expectedTestCG7.asm");
-        String actual = readFile("main.asm");
+        String actual = readFile("main.s");
         Assert.assertEquals(expected, actual);
     }
 

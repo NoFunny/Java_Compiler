@@ -23,10 +23,13 @@ public class Main {
     
     public static void main(String[] args) throws IOException {
         String FileName = "";
+        String FileCompile = "";
         if (args.length > 0) {
             FileName = args[0];
-        } else {
+            FileCompile = args[1];
+        }else {
             FileName = "src/main/resources/alg.java";
+            FileCompile = "main.out";
         }
         String input = readFile(FileName);
         String outputDir = "src/main/resources/out.txt";
@@ -80,7 +83,7 @@ public class Main {
                     CodeGen codeGen = new CodeGen();
                     codeGen.go(root, identifierTable);
                     try {
-                        Process proc = Runtime.getRuntime().exec("gcc -no-pie main.s");
+                        Process proc = Runtime.getRuntime().exec("gcc -no-pie main.s -o" + FileCompile);
                     }catch (IOException e) {
                         e.printStackTrace();
                     }
