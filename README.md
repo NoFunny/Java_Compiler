@@ -19,7 +19,7 @@ gradle build
 
 ## Run project 
 ```
-./gradlew run
+./gradlew run --args="<fileapth and name asm file> , <filepath and name executable file>"
 ```
 
 
