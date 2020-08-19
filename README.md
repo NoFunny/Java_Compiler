@@ -28,9 +28,9 @@ gradle build
 
 ### Into the program:
 ```
-1 - --dumb-token
-2 - --dumb-parser
-3 - --dumb-asm
+1 - --dump-token
+2 - --dump-parser
+3 - --dump-asm
 4 - --compile
 5 - <exit>
 ```
