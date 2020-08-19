@@ -36,7 +36,7 @@ public class Main {
         boolean flag = true;
 
         while (flag) {
-            System.out.println("\n1 - --dumb-token" + '\n' + "2 - --dumb-parser" + '\n' + "3 - --dumb-asm" + '\n' + "4 - --compile" + '\n' + "5 - exit");
+            System.out.println("\n1 - --dump-token" + '\n' + "2 - --dump-parser" + '\n' + "3 - --dump-asm" + '\n' + "4 - --compile" + '\n' + "5 - exit");
             System.out.println("Choose part:");
             Scanner in = new Scanner(System.in);
             int s = Integer.parseInt(in.nextLine());
